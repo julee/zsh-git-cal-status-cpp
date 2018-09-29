@@ -44,13 +44,13 @@ moj-git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 //#include <sys/ioctl.h>
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <map>
-#include <vector>
+//#include <sstream>
+//#include <map>
+//#include <vector>
 #include <boost/interprocess/sync/file_lock.hpp>
-#include <boost/lexical_cast.hpp>
-#include <sys/stat.h>
-#include <boost/date_time/posix_time/conversion.hpp> // boost:::to_time_t(ptime pt) - ilość sekund od 1970.
+//#include <boost/lexical_cast.hpp>
+//#include <sys/stat.h>
+//#include <boost/date_time/posix_time/conversion.hpp> // boost:::to_time_t(ptime pt) - ilość sekund od 1970.
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 //#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować.
@@ -217,6 +217,7 @@ int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
 	}
 }
 
+#if 0
 // https://stackoverflow.com/questions/17599096/how-to-spawn-child-processes-that-dont-die-with-parent
 // Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
 bool spawn_orphan(const std::string& cmd) {
@@ -268,9 +269,10 @@ void spawn_myself(const Options& opt, char** argv) {
 	//std::cerr << "\n-calling-\n" << command << "\n--\n";
 	// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
 	if(not spawn_orphan(command)) {
-		throw ExecError(101006);
+		throw ExecError("cannot_spawn");//(101006);
 	}
 }
+#endif
 
 void update_git_status(const std::string& lock_1st_fname, const std::string& lock_2nd_fname, const std::string& lock_3rd_fname, const Options& opt) {
 	//std::cerr << "\n-must_update_now-\n";
@@ -308,13 +310,11 @@ try {
 	if(not opt.must_update_now) {
 		int older = fileOlderSeconds(lock_3rd_fname);
 		if(-older > opt.refresh_sec or older == 1) { // forced refresh
-			constexpr bool naprawilem_funkcje__spawn_orphan=false;
-			if(naprawilem_funkcje__spawn_orphan) {
-				// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
-				spawn_myself(opt,argv);
-			} else {
-				update_git_status(lock_1st_fname,lock_2nd_fname,lock_3rd_fname,opt);
-			}
+#if 0
+			// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
+			spawn_myself(opt,argv);
+#endif
+			update_git_status(lock_1st_fname,lock_2nd_fname,lock_3rd_fname,opt);
 		}
 		{
 			// nie udało się zakluczyć, lub nie musimy odświeżać, zwracamy zawartość result_file
