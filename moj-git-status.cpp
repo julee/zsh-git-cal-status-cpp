@@ -73,6 +73,7 @@ std::string exec(const std::string& cmd, int code) {
     }
 }
 
+const std::vector<std::string> conflict_strings{"DD","AU","UD","UA","DU","AA","UU"};
 class GitParse {
 	private:
 		std::string	branch    = "testuje";
@@ -84,7 +85,30 @@ class GitParse {
 		int		untracked = 0;
 
 	public:
-		void parse(std::string) {
+		void parse(std::string s) {
+			if(s.substr(0,2)=="##") {
+				if (s == "## Initial commit on master") {
+					branch="master";
+					return;
+				}
+				std::size_t pos_dots = s.find("...");
+				if (pos_dots != std::string::npos) {
+					branch=sanitize(s.substr(3,pos_dots));
+					std::size_t pos_ahead  = s.find("ahead");
+					if (pos_ahead != std::string::npos) {
+						std::istringstream ss(s.substr(pos_ahead  + 6));
+						ss >> ahead;
+					}
+					std::size_t pos_behind = s.find("behind");
+					if (pos_behind != std::string::npos) {
+						std::istringstream ss(s.substr(pos_behind + 7));
+						ss >> behind;
+					}
+				} else {
+					branch=sanitize(s.substr(3));
+				}
+			} else {
+			}
 		}
 		std::string str() {
 			return       branch
