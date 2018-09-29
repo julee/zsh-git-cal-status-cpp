@@ -19,18 +19,19 @@
  *    101003 : różnica w sekundach miała wyjść <=0 a nie wyszła.
  *    101004 : cannot stat file.
  *    101005 : brakuje whoami
+ *    101006 : failed to spawn orphan
  *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
  *    -100   : wynik specjalny - gdy nie udało się sprawdzić daty na pliku bufora.
  *
  * przykłądowe wywołania:
 
-moj-git-status.bin --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd`
-moj-git-status.bin --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd` --branch-master-override jg
+moj-git-status.bin --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek
+moj-git-status.bin --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jg
 
-moj-git-status.bin --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd`
-moj-git-status.bin --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd` --branch-master-override dg
+moj-git-status.bin --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git --work-tree=$HOME
+moj-git-status.bin --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git --work-tree=$HOME --branch-master-override dg
 
-moj-git-status.bin --pwd-dir `pwd`
+moj-git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 
  *
  *
@@ -39,6 +40,7 @@ moj-git-status.bin --pwd-dir `pwd`
 #include "Options.hpp"
 
 #include <stdexcept>
+#include <sys/wait.h>
 //#include <sys/ioctl.h>
 #include <iostream>
 #include <fstream>
@@ -60,6 +62,7 @@ std::map<int,std::string> error_codes = {
 	, {101002 , "różnica w sekundach miała wyjść <=0 a nie wyszła" }
 	, {101004 , "cannot stat file" }
 	, {101005 , "brakuje whoami" }
+	, {101006 , "failed to spawn orphan" }
 	};
 
 std::string sanitize(std::string offending_string) {
@@ -75,7 +78,7 @@ struct ExecError : std::runtime_error {
 };
 
 // https://stackoverflow.com/questions/52164723/how-to-execute-a-command-and-get-return-code-stdout-and-stderr-of-command-in-c
-// FIXME: lepsze to, ale nie działa tego nie ma w boost 1.62, jest w 1.68, a ja mam tutaj 1.62
+// FIXME: lepsze to, ale nie działa tego nie ma w boost 1.62, jest dopiero od 1.64, a ja mam tutaj 1.62
 //        https://www.boost.org/doc/libs/1_65_1/doc/html/boost_process/tutorial.html#boost_process.tutorial.starting_a_process
 std::string exec(const std::string& cmd, int code) {
 /* ajajaj, tego nie ma w boost 1.62, jest w 1.68, a ja mam tutaj 1.62
