@@ -5,8 +5,6 @@
 # h: equivalent to dirname
 export __GIT_PROMPT_DIR="${HOME}/bin"
 
-export GIT_PROMPT_EXECUTABLE=${GIT_PROMPT_EXECUTABLE:-"python"}
-
 # Initialize colors.
 autoload -U colors
 colors
@@ -43,13 +41,9 @@ function chpwd_update_git_vars() {
 function update_current_git_vars() {
     unset __CURRENT_GIT_STATUS
 
-    if [[ "$GIT_PROMPT_EXECUTABLE" == "python" ]]; then
-        local gitstatus="$__GIT_PROMPT_DIR/gitstatus.py"
-        _GIT_STATUS=`python ${gitstatus} 2>/dev/null`
-    fi
-    if [[ "$GIT_PROMPT_EXECUTABLE" == "haskell" ]]; then
-        _GIT_STATUS=`git status --porcelain --branch &> /dev/null | $__GIT_PROMPT_DIR/src/.bin/gitstatus`
-    fi
+    local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
+    _GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} 2>/dev/null`
+
      __CURRENT_GIT_STATUS=("${(@s: :)_GIT_STATUS}")
 	GIT_BRANCH=$__CURRENT_GIT_STATUS[1]
 	GIT_AHEAD=$__CURRENT_GIT_STATUS[2]
