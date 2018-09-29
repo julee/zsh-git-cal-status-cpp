@@ -210,7 +210,7 @@ try {
 		std::ifstream result_file(lock_2nd_fname);
 		if(result_file.is_open()) {
 			//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname); // rezygnuję, bo trzeba linkować.
-			int older=0;
+			int older=-100;
 			struct stat result;
 			if(stat(lock_2nd_fname.c_str(), &result)==0) {
 				auto mod_time = result.st_mtime;
