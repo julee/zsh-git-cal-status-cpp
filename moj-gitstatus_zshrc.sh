@@ -29,7 +29,7 @@ function preexec_update_git_vars() {
 
 function precmd_update_git_vars() {
     if [ -n "$__EXECUTED_GIT_COMMAND" ] || [ ! -n "$ZSH_THEME_GIT_PROMPT_CACHE" ]; then
-        update_current_git_vars
+        update_current_git_vars $1
         unset __EXECUTED_GIT_COMMAND
     fi
 }
@@ -41,8 +41,18 @@ function chpwd_update_git_vars() {
 function update_current_git_vars() {
     unset __CURRENT_GIT_STATUS
 
-    local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-    _GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} 2>/dev/null`
+    if [[ "$1" == "n" ]]; then
+	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
+	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} 2>/dev/null`
+    fi
+    if [[ "$1" == "d" ]]; then
+	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
+	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir ~/.dotfiles/.git --work-tree=${HOME} --branch-master-override dg 2>/dev/null`
+    fi
+    if [[ "$1" == "j" ]]; then
+	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
+	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jg 2>/dev/null`
+    fi
 
      __CURRENT_GIT_STATUS=("${(@s: :)_GIT_STATUS}")
 	GIT_BRANCH=$__CURRENT_GIT_STATUS[1]
@@ -56,7 +66,7 @@ function update_current_git_vars() {
 
 
 git_super_status() {
-	precmd_update_git_vars
+	precmd_update_git_vars $1
     if [ -n "$__CURRENT_GIT_STATUS" ]; then
 	  STATUS="$ZSH_THEME_GIT_PROMPT_PREFIX$ZSH_THEME_GIT_PROMPT_BRANCH$GIT_BRANCH%{${reset_color}%}"
 	  if [ "$GIT_BEHIND" -ne "0" ]; then
@@ -87,7 +97,7 @@ git_super_status() {
 }
 
 # Default values for the appearance of the prompt. Configure at will.
-ZSH_THEME_GIT_PROMPT_PREFIX="<"
+ZSH_THEME_GIT_PROMPT_PREFIX=""
 ZSH_THEME_GIT_PROMPT_SUFFIX=">"
 ZSH_THEME_GIT_PROMPT_SEPARATOR="|"
 ZSH_THEME_GIT_PROMPT_BRANCH="%{$fg_bold[yellow]%}"
