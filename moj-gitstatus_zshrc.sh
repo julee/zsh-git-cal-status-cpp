@@ -47,11 +47,11 @@ function update_current_git_vars() {
     fi
     if [[ "$1" == "d" ]]; then
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir ~/.dotfiles/.git --work-tree=${HOME} --branch-master-override dg 2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir ~/.dotfiles/.git --work-tree=${HOME} --branch-master-override dgit 2>/dev/null`
     fi
     if [[ "$1" == "j" ]]; then
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jg 2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jgit 2>/dev/null`
     fi
 
      __CURRENT_GIT_STATUS=("${(@s: :)_GIT_STATUS}")
@@ -97,8 +97,8 @@ git_super_status() {
 }
 
 # Default values for the appearance of the prompt. Configure at will.
-ZSH_THEME_GIT_PROMPT_PREFIX=""
-ZSH_THEME_GIT_PROMPT_SUFFIX=">"
+ZSH_THEME_GIT_PROMPT_PREFIX=" "
+ZSH_THEME_GIT_PROMPT_SUFFIX=" "
 ZSH_THEME_GIT_PROMPT_SEPARATOR="|"
 ZSH_THEME_GIT_PROMPT_BRANCH="%{$fg_bold[yellow]%}"
 ZSH_THEME_GIT_PROMPT_STAGED="%{$fg[green]%}%{●%G%}"
