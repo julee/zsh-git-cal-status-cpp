@@ -127,11 +127,16 @@ class GitParse {
 		int		untracked = 0;
 
 	public:
-		void parse(const std::string& s) {
+		void parse(const std::string& s , const std::string& call) {
 			std::string start = s.substr(0,2);
 			if(start == "##") {
 				if (s == "## Initial commit on master") {
-					branch="master";
+					branch = "master";
+					return;
+				}
+				if (s == "## HEAD (no branch)") {
+					branch = /*sanitize(*/exec(call+" rev-parse --short HEAD",0)/*)*/;
+					branch = branch.substr(0,branch.size()-1);
 					return;
 				}
 				std::size_t pos_dots = s.find("...");
@@ -148,7 +153,7 @@ class GitParse {
 						ss >> behind;
 					}
 				} else {
-					branch=/*sanitize(*/s.substr(3)/*)*/;
+					branch = sanitize(s.substr(3));
 				}
 			} else {
 				if(start == "??") {
@@ -180,15 +185,16 @@ class GitParse {
 };
 
 std::string gitParsedResult(const Options& opt) {
-	std::string gdir  =""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
-	std::string wtree =""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
-	std::string git_porcelain = exec("/usr/bin/git "+gdir+wtree+" status --porcelain --branch",0);
+	std::string gdir  = ""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
+	std::string wtree = ""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
+	std::string call  = "/usr/bin/git "+gdir+wtree;
+	std::string git_porcelain = exec(call+" status --porcelain --branch",0);
 
 	GitParse result;
 	std::string line;
 	std::istringstream ss_result(git_porcelain);
 	while (getline(ss_result, line, '\n')) {
-		result.parse(line);
+		result.parse(line,call);
 	}
 
 	return result.str(opt);
