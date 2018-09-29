@@ -16,7 +16,8 @@
  *    0      : nie ma problemów
  *    101001 : brakuje --pwd_dir
  *    101002 : nie moze otworzyc pliku bufora
- *    101002 : różnica w sekundach miała wyjść <=0 a nie wyszła.
+ *    101003 : różnica w sekundach miała wyjść <=0 a nie wyszła.
+ *    101004 : cannot stat file.
  *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
  *    -100   : wynik specjalny - gdy nie udało się sprawdzić daty na pliku bufora.
  *
@@ -51,7 +52,7 @@ moj-git-status.bin --pwd-dir `pwd`
 
 //#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować.
 
-std::map<int,std::string> error_codes = {{0,"ok"},{101001,"brakuje --pwd_dir"},{101002,"nie moze otworzyc pliku bufora"},{101002,"różnica w sekundach miała wyjść <=0 a nie wyszła"}};
+std::map<int,std::string> error_codes = {{0,"ok"},{101001,"brakuje --pwd_dir"},{101002,"nie moze otworzyc pliku bufora"},{101002,"różnica w sekundach miała wyjść <=0 a nie wyszła"},{101004,"cannot stat file"}};
 
 std::string sanitize(std::string offending_string) {
 	std::string extr=":+-.=_,"; // () <> & na pewno nie mogą być, co do innych to nie wiem
@@ -109,7 +110,7 @@ class GitParse {
 		int		untracked = 0;
 
 	public:
-		void parse(std::string s) {
+		void parse(const std::string& s) {
 			std::string start = s.substr(0,2);
 			if(start == "##") {
 				if (s == "## Initial commit on master") {
@@ -176,58 +177,78 @@ std::string gitParsedResult(const Options& opt) {
 	return result.str(opt);
 }
 
+int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
+	struct stat result;
+	if(stat(fn.c_str(), &result)==0) {
+		auto mod_time = result.st_mtime;
+		boost::posix_time::ptime when(boost::posix_time::from_time_t(mod_time)         );
+		boost::posix_time::ptime now (boost::posix_time::second_clock::universal_time());
+		int older = (when-now).total_seconds(); // powinno wyjść ujemne.
+		if(older > 0) {
+		/*
+			if(do_throw) {
+				throw ExecError(101003);
+			} else
+		*/
+			{
+				return -100;
+			}
+		}
+		return older;
+	};
+/*
+	if(do_throw) {
+		throw ExecError(101004);
+	} else
+*/
+	{
+		return -100;
+	}
+}
+
 int main(int argc, char** argv)
 try {
 	struct winsize w; ioctl(0, TIOCGWINSZ, &w);
-	Options opt(argc,argv,w.ws_col,15);
-//std::cerr << "pwd dir  : " << opt.pwd_dir   << "\n";
-//std::cerr << "git dir  : " << opt.git_dir   << "\n";
-//std::cerr << "work tree: " << opt.work_tree << "\n";
+	Options opt(argc,argv,w.ws_col,15);  //std::cerr << "pwd dir  : " << opt.pwd_dir   << "\n";  //std::cerr << "git dir  : " << opt.git_dir   << "\n";  //std::cerr << "work tree: " << opt.work_tree << "\n";
 	if(opt.pwd_dir == "") throw ExecError(101001);
-	std::string whoami = exec("/usr/bin/whoami",100000);
-//std::cerr << "whoami   : \"" << whoami     << "\"\n";
-	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));
-//std::cerr << lockfile_name << "\n";
+	std::string whoami = exec("/usr/bin/whoami",100000);  //std::cerr << "whoami   : \"" << whoami     << "\"\n";
+	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));  //std::cerr << lockfile_name << "\n";
 	std::string lock_1st_fname = "/tmp/"+lockfile_name;
 	std::string lock_2nd_fname = "/tmp/"+lockfile_name+"_RESULT";
-	std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);
-//std::cerr << "touch    : \"" << touch      << "\"\n";
 
-	// https://www.boost.org/doc/libs/1_68_0/doc/html/boost/interprocess/file_lock.html
-	boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
-	if(the_1st_lock.try_lock()) {
-		std::string git_parsed_result = gitParsedResult(opt);
-		std::ofstream result_file(lock_2nd_fname);
-		boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
-		if(the_2nd_lock.try_lock()) {
-			// mamy otwarty plik result_file, można do niego pisać.
-			result_file << git_parsed_result;
-		} else {
-			// nie udało się do niego pisać, chociaż mamy wynik :(
-		}
-		std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
-	} else {
-		// nie udało się zakluczyć, zwracamy zawartość result_file
-		std::ifstream result_file(lock_2nd_fname);
-		if(result_file.is_open()) {
-			//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname); // rezygnuję, bo trzeba linkować.
-			int older=-100;
-			struct stat result;
-			if(stat(lock_2nd_fname.c_str(), &result)==0) {
-				auto mod_time = result.st_mtime;
-				boost::posix_time::ptime when(boost::posix_time::from_time_t(mod_time)         );
-				boost::posix_time::ptime now (boost::posix_time::second_clock::universal_time());
-				older = (when-now).total_seconds(); // powinno wyjść ujemne.
-				if(older > 0) throw ExecError(101003);
-			};
-			std::string line;
-			getline(result_file , line);
-			std::cout << line << " " << older; // FIXME - czas w sekundach tu ma być.
-		} else {
-			throw ExecError(101002);
+	int older = fileOlderSeconds(lock_2nd_fname);
+
+	if(-older > opt.refresh_sec) { // forced refresh
+		std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);  //std::cerr << "touch    : \"" << touch      << "\"\n";
+		// https://www.boost.org/doc/libs/1_68_0/doc/html/boost/interprocess/file_lock.html
+		boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
+		if(the_1st_lock.try_lock()) {
+			std::string git_parsed_result = gitParsedResult(opt);
+			std::ofstream result_file(lock_2nd_fname);
+			boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
+			if(the_2nd_lock.try_lock()) {
+				// mamy otwarty plik result_file, można do niego pisać.
+				result_file << git_parsed_result;
+			} else {
+				// nie udało się do niego pisać, chociaż mamy wynik :(
+			}
+			std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
+			return 0;
 		}
 	}
-
+	// nie udało się zakluczyć, lub nie musimy odświeżać, zwracamy zawartość result_file
+	std::ifstream result_file(lock_2nd_fname);
+	if(result_file.is_open()) {
+		//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname); // rezygnuję, bo trzeba linkować.
+		//int older=-100;
+		//older = fileOlderSeconds(lock_2nd_fnamem,true);
+		std::string line;
+		getline(result_file , line);
+		std::cout << line << " " << older;
+		return 0;
+	} else {
+		throw ExecError(101002);
+	}
 } catch(const ExecError& err) {
 //std::cerr << "Error code " << err.code;
 	if(err.code == 32768) { // fatal: Not a git repository - nie ma nic do pisnia.
@@ -240,5 +261,6 @@ try {
 //std::cerr << " : unrecognized code\n";
 	}
 	std::cout << "unknown 0 0 0 0 0 0 " << err.code;
+	return err.code;
 }
 

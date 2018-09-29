@@ -15,6 +15,7 @@ struct Options
 	std::string	git_dir;
 	std::string	work_tree;
 	std::string	branch_master_override;
+	int		refresh_sec;
 	//int		num;
 	//bool		flag;
 
@@ -31,6 +32,7 @@ struct Options
 		("git-dir"                , po::value<std::string>(&git_dir                )->default_value(""   ),"The --git-dir for git")
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
 		("branch-master-override" , po::value<std::string>(&branch_master_override )->default_value(""   ),"If the branch name is \"master\" then override it to given name")
+		("refresh-sec"            , po::value<int        >(&refresh_sec            )->default_value(10   ),"time in seconds between a forced refresh")
 		//("num"                  , po::value<int        >(&num                    )->default_value(1    ),"test number")
 		//("flag"                 , po::bool_switch       (&flag                   )->default_value(false),"test flag.")
 		;

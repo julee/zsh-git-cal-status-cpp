@@ -43,15 +43,15 @@ function update_current_git_vars() {
 
     if [[ "$1" == "n" ]]; then
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} 2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --refresh-sec 2 2>/dev/null`
     fi
     if [[ "$1" == "d" ]]; then
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir ~/.dotfiles/.git --work-tree=${HOME} --branch-master-override dgit 2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --pwd-dir DGIT --git-dir ~/.dotfiles/.git --work-tree=${HOME} --branch-master-override dgit --refresh-sec 5 2>/dev/null`
     fi
     if [[ "$1" == "j" ]]; then
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jgit 2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jgit --refresh-sec 10 2>/dev/null`
     fi
 
      __CURRENT_GIT_STATUS=("${(@s: :)_GIT_STATUS}")
