@@ -43,7 +43,7 @@ function update_current_git_vars() {
 
     if [[ "$1" == "n" ]]; then
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --refresh-sec 2 2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --pwd-dir ${PWD:A} --refresh-sec 0 2>/dev/null`
     fi
     if [[ "$1" == "d" ]]; then
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
@@ -62,6 +62,7 @@ function update_current_git_vars() {
 	GIT_CONFLICTS=$__CURRENT_GIT_STATUS[5]
 	GIT_CHANGED=$__CURRENT_GIT_STATUS[6]
 	GIT_UNTRACKED=$__CURRENT_GIT_STATUS[7]
+	GIT_SECONDS_OR_ERROR=$__CURRENT_GIT_STATUS[8]
 }
 
 
@@ -88,6 +89,9 @@ git_super_status() {
 	  if [ "$GIT_UNTRACKED" -ne "0" ]; then
 		  STATUS="$STATUS$ZSH_THEME_GIT_PROMPT_UNTRACKED%{${reset_color}%}"
 	  fi
+#	  if [ "$GIT_SECONDS_OR_ERROR" -ne "0" ]; then
+#		  STATUS="$STATUS$GIT_SECONDS_OR_ERROR$ZSH_THEME_GIT_PROMPT_SEC_ERR%{${reset_color}%}"
+#	  fi
 	  if [ "$GIT_CHANGED" -eq "0" ] && [ "$GIT_CONFLICTS" -eq "0" ] && [ "$GIT_STAGED" -eq "0" ] && [ "$GIT_UNTRACKED" -eq "0" ]; then
 		  STATUS="$STATUS$ZSH_THEME_GIT_PROMPT_CLEAN"
 	  fi
@@ -107,6 +111,7 @@ ZSH_THEME_GIT_PROMPT_CHANGED="%{$fg[red]%}%{✚%G%}"
 ZSH_THEME_GIT_PROMPT_BEHIND="%{↓%G%}"
 ZSH_THEME_GIT_PROMPT_AHEAD="%{↑%G%}"
 ZSH_THEME_GIT_PROMPT_UNTRACKED="%{…%G%}"
+ZSH_THEME_GIT_PROMPT_SEC_ERR="%{s%G%}"
 ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_bold[green]%}%{✓%G%}"
 
 # ●  staged
