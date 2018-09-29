@@ -1,15 +1,3 @@
-/* ajajaj, tego nie ma w boost 1.62, jest w 1.68, a ja mam tutaj 1.62
-#include <iostream>
-#include <boost/process/system.hpp>
-
-int main(int argc, char** argv)
-{
-	boost::process::ipstream std_out;
-	boost::process::ipstream std_err;
-	boost::process::system("ls -laR /tmp", bp::std_out > std_out, bp::std_err > std_err, bp::std_in < stdin);
-}
-*/
-
 /* program:
  *
  * 1. zakłada unikalny lockfile(…) dla podanych argumentów + whoami + pwd
@@ -57,7 +45,21 @@ struct ExecError : std::runtime_error {
 	const char* what() const noexcept override { return "exec error"; }
 };
 
+// https://stackoverflow.com/questions/52164723/how-to-execute-a-command-and-get-return-code-stdout-and-stderr-of-command-in-c
+// FIXME: lepsze to, ale nie działa tego nie ma w boost 1.62, jest w 1.68, a ja mam tutaj 1.62
+//        https://www.boost.org/doc/libs/1_65_1/doc/html/boost_process/tutorial.html#boost_process.tutorial.starting_a_process
 std::string exec(const std::string& cmd, int code) {
+/* ajajaj, tego nie ma w boost 1.62, jest w 1.68, a ja mam tutaj 1.62
+#include <iostream>
+#include <boost/process/system.hpp>
+int main(int argc, char** argv)
+{
+	boost::process::ipstream std_out;
+	boost::process::ipstream std_err;
+	boost::process::system("ls -laR /tmp", bp::std_out > std_out, bp::std_err > std_err, bp::std_in < stdin);
+}
+*/
+
     std::array<char, 128> buffer;
     std::string result;
     auto pipe = popen(cmd.c_str(), "r"); // get rid of shared_ptr
@@ -171,6 +173,7 @@ try {
 	std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);
 //std::cerr << "touch    : \"" << touch      << "\"\n";
 
+	// https://www.boost.org/doc/libs/1_68_0/doc/html/boost/interprocess/file_lock.html
 	boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
 	if(the_1st_lock.try_lock()) {
 		std::string git_parsed_result = gitParsedResult(opt);
