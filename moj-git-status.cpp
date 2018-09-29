@@ -213,7 +213,83 @@ int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
 	} else
 */
 	{
-		return -100;
+		return 1;
+	}
+}
+
+// https://stackoverflow.com/questions/17599096/how-to-spawn-child-processes-that-dont-die-with-parent
+// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
+bool spawn_orphan(const std::string& cmd) {
+	//char command[1024]; // We could segfault if cmd is longer than 1000 bytes or so
+	if(cmd.size() > 1000) {
+		return false;
+	}
+	int pid;
+	int Stat;
+	pid = fork();
+	if (pid < 0) { // perror("FORK FAILED\n"); return pid;
+		return false;
+	}
+	if (pid == 0) { // CHILD
+		setsid(); // Make this process the session leader of a new session
+		pid = fork();
+		if (pid < 0) { //printf("FORK FAILED\n"); exit(1);
+			exit(1);
+		}
+		if (pid == 0) { // GRANDCHILD
+			//sprintf(command,"bash -c '%s'",cmd);
+			execl("/bin/sh", "/bin/sh", "-c", cmd.c_str(), NULL); // Only returns on error
+			//perror("execl failed");
+			// system(cmd.c_str()); // tego mocno odradzają.
+			exit(1);
+		}
+		exit(0); // SUCCESS (This child is reaped below with waitpid())
+	}
+
+	// Reap the child, leaving the grandchild to be inherited by init
+	waitpid(pid, &Stat, 0);
+	if ( WIFEXITED(Stat) && (WEXITSTATUS(Stat) == 0) ) {
+		return true; // Child forked and exited successfully
+	} else {
+		//perror("failed to spawn orphan\n");
+		//return -1;
+		return false;
+	}
+}
+
+/* bo tamten nie chce działać wewnątrz zsh
+bool inny_spawn_orphan(const std::string& cmd) {
+}
+*/
+
+void spawn_myself(const Options& opt, char** argv) {
+	std::string command = argv[0];
+	command = "/home/"+opt.whoami+"/bin/"+command+opt.rebuild()+" --must-update-now";
+	//std::cerr << "\n-calling-\n" << command << "\n--\n";
+	// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
+	if(not spawn_orphan(command)) {
+		throw ExecError(101006);
+	}
+}
+
+void update_git_status(const std::string& lock_1st_fname, const std::string& lock_2nd_fname, const std::string& lock_3rd_fname, const Options& opt) {
+	//std::cerr << "\n-must_update_now-\n";
+	std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);  //std::cerr << "touch    : \"" << touch      << "\"\n";
+	// https://www.boost.org/doc/libs/1_68_0/doc/html/boost/interprocess/file_lock.html
+	boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
+	if(the_1st_lock.try_lock()) {
+		std::ofstream result_file(lock_2nd_fname);
+		boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
+		if(the_2nd_lock.try_lock()) {
+			// mamy otwarty plik result_file, można do niego pisać.
+			std::string git_parsed_result = gitParsedResult(opt);
+			result_file << git_parsed_result;
+			result_file.close();
+			the_2nd_lock.unlock();
+			std::string command = "/bin/mv -f "+lock_2nd_fname+" "+lock_3rd_fname;
+			system(command.c_str());
+		} // else // nie udało się do niego pisać, chociaż mamy wynik :(
+	//	std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
 	}
 }
 
@@ -227,40 +303,36 @@ try {
 	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+opt.whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));  //std::cerr << lockfile_name << "\n";
 	std::string lock_1st_fname = "/tmp/"+lockfile_name;
 	std::string lock_2nd_fname = "/tmp/"+lockfile_name+"_RESULT";
+	std::string lock_3rd_fname = "/tmp/"+lockfile_name+"_COPY";
 
-	int older = fileOlderSeconds(lock_2nd_fname);
-
-	if(-older > opt.refresh_sec) { // forced refresh
-		std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);  //std::cerr << "touch    : \"" << touch      << "\"\n";
-		// https://www.boost.org/doc/libs/1_68_0/doc/html/boost/interprocess/file_lock.html
-		boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
-		if(the_1st_lock.try_lock()) {
-			std::string git_parsed_result = gitParsedResult(opt);
-			std::ofstream result_file(lock_2nd_fname);
-			boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
-			if(the_2nd_lock.try_lock()) {
-				// mamy otwarty plik result_file, można do niego pisać.
-				result_file << git_parsed_result;
+	if(not opt.must_update_now) {
+		int older = fileOlderSeconds(lock_3rd_fname);
+		if(-older > opt.refresh_sec or older == 1) { // forced refresh
+			constexpr bool naprawilem_funkcje__spwan_orphan=false;
+			if(naprawilem_funkcje__spwan_orphan) {
+				// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
+				spawn_myself(opt,argv);
 			} else {
-				// nie udało się do niego pisać, chociaż mamy wynik :(
+				update_git_status(lock_1st_fname,lock_2nd_fname,lock_3rd_fname,opt);
 			}
-			std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
-			return 0;
 		}
-	}
-	// nie udało się zakluczyć, lub nie musimy odświeżać, zwracamy zawartość result_file
-	std::ifstream result_file(lock_2nd_fname);
-	if(result_file.is_open()) {
-		//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname); // rezygnuję, bo trzeba linkować.
-		//int older=-100;
-		//older = fileOlderSeconds(lock_2nd_fnamem,true);
-		std::string line;
-		getline(result_file , line);
-		std::cout << line << " " << older;
-		return 0;
+		{
+			// nie udało się zakluczyć, lub nie musimy odświeżać, zwracamy zawartość result_file
+			std::ifstream result_file(lock_3rd_fname);
+			if(result_file.is_open()) {
+				std::string line;
+				getline(result_file , line);
+				std::cout << line << " " << older;
+				return 0;
+			} else {
+				throw ExecError(101002);
+			}
+		}
 	} else {
-		throw ExecError(101002);
+		update_git_status(lock_1st_fname,lock_2nd_fname,lock_3rd_fname,opt);
 	}
+
+
 } catch(const ExecError& err) {
 //std::cerr << "Error code " << err.code;
 	if(err.code == 32768) { // fatal: Not a git repository - nie ma nic do pisnia.
