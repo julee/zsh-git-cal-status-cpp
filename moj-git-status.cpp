@@ -308,8 +308,8 @@ try {
 	if(not opt.must_update_now) {
 		int older = fileOlderSeconds(lock_3rd_fname);
 		if(-older > opt.refresh_sec or older == 1) { // forced refresh
-			constexpr bool naprawilem_funkcje__spwan_orphan=false;
-			if(naprawilem_funkcje__spwan_orphan) {
+			constexpr bool naprawilem_funkcje__spawn_orphan=false;
+			if(naprawilem_funkcje__spawn_orphan) {
 				// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
 				spawn_myself(opt,argv);
 			} else {
@@ -344,7 +344,7 @@ try {
 	} else {
 //std::cerr << " : unrecognized code\n";
 	}
-	std::cout << "unknown 0 0 0 0 0 0 " << err.code;
+	std::cout << "err"+boost::lexical_cast<std::string>(err.code)+" 0 0 0 0 0 0 " << err.code;
 	return err.code;
 }
 
