@@ -38,7 +38,7 @@ moj-git-status.bin --pwd-dir `pwd`
 #include "Options.hpp"
 
 #include <stdexcept>
-#include <sys/ioctl.h>
+//#include <sys/ioctl.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -208,8 +208,8 @@ int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
 
 int main(int argc, char** argv)
 try {
-	struct winsize w; ioctl(0, TIOCGWINSZ, &w);
-	Options opt(argc,argv,w.ws_col,15);  //std::cerr << "pwd dir  : " << opt.pwd_dir   << "\n";  //std::cerr << "git dir  : " << opt.git_dir   << "\n";  //std::cerr << "work tree: " << opt.work_tree << "\n";
+//	struct winsize w; ioctl(0, TIOCGWINSZ, &w);
+	Options opt(argc,argv/*,w.ws_col,15*/);//std::cerr << "pwd dir  : " << opt.pwd_dir << "\n"; //std::cerr << "git dir  : " << opt.git_dir << "\n";//std::cerr << "work tree: " << opt.work_tree << "\n";
 	if(opt.pwd_dir == "") throw ExecError(101001);
 	std::string whoami = exec("/usr/bin/whoami",100000);  //std::cerr << "whoami   : \"" << whoami     << "\"\n";
 	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));  //std::cerr << lockfile_name << "\n";

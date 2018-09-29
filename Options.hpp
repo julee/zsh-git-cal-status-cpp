@@ -16,15 +16,16 @@ struct Options
 	std::string	work_tree;
 	std::string	branch_master_override;
 	int		refresh_sec;
+	bool		must_update_now;
 	//int		num;
 	//bool		flag;
 
-	Options(int argc, char** argv, unsigned columns, unsigned max_description_length)
+	Options(int argc, char** argv/*, unsigned columns, unsigned max_description_length*/)
 	// to make it work put in `int main(……)`:
 	// #include <sys/ioctl.h>
 	// struct winsize w; ioctl(0, TIOCGWINSZ, &w); Options opt(argc,argv,w.ws_col,15);
-		: options(columns		// width of the terminal
-		, max_description_length)	// if option description eg. `--diff_max arg (=0.34999999999999998)` is longer than this, then explanation starts at next line
+		//: options(columns		// width of the terminal
+		//, max_description_length)	// if option description eg. `--diff_max arg (=0.34999999999999998)` is longer than this, then explanation starts at next line
 	{
 		options.add_options()
 		("help,h"                 , "display this help.")
@@ -33,6 +34,7 @@ struct Options
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
 		("branch-master-override" , po::value<std::string>(&branch_master_override )->default_value(""   ),"If the branch name is \"master\" then override it to given name")
 		("refresh-sec"            , po::value<int        >(&refresh_sec            )->default_value(10   ),"time in seconds between a forced refresh")
+		("must-update-now"        , po::bool_switch       (&must_update_now        )->default_value(false),"If set, will force git updating right now.")
 		//("num"                  , po::value<int        >(&num                    )->default_value(1    ),"test number")
 		//("flag"                 , po::bool_switch       (&flag                   )->default_value(false),"test flag.")
 		;
