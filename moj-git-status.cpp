@@ -17,6 +17,7 @@
  *    101001 : brakuje --pwd_dir
  *    101002 : nie moze otworzyc pliku bufora
  *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
+ *    101002 : różnica w sekundach miała wyjść <=0 a nie wyszła.
  */
 
 #include "Options.hpp"
@@ -30,8 +31,13 @@
 #include <vector>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/lexical_cast.hpp>
+#include <sys/stat.h>
+#include <boost/date_time/posix_time/conversion.hpp> // boost:::to_time_t(ptime pt) - ilość sekund od 1970.
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-std::map<int,std::string> error_codes = {{0,"ok"},{101001,"brakuje --pwd_dir"},{101002,"nie moze otworzyc pliku bufora"}};
+//#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować.
+
+std::map<int,std::string> error_codes = {{0,"ok"},{101001,"brakuje --pwd_dir"},{101002,"nie moze otworzyc pliku bufora"},{101002,"różnica w sekundach miała wyjść <=0 a nie wyszła"}};
 
 std::string sanitize(std::string offending_string) {
 	std::string extr=":+-.=_,"; // () <> & na pewno nie mogą być, co do innych to nie wiem
@@ -190,9 +196,19 @@ try {
 		// nie udało się zakluczyć, zwracamy zawartość result_file
 		std::ifstream result_file(lock_2nd_fname);
 		if(result_file.is_open()) {
+			//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname); // rezygnuję, bo trzeba linkować.
+			int older=0;
+			struct stat result;
+			if(stat(lock_2nd_fname.c_str(), &result)==0) {
+				auto mod_time = result.st_mtime;
+				boost::posix_time::ptime when(boost::posix_time::from_time_t(mod_time)         );
+				boost::posix_time::ptime now (boost::posix_time::second_clock::universal_time());
+				older = (when-now).total_seconds(); // powinno wyjść ujemne.
+				if(older > 0) throw ExecError(101003);
+			};
 			std::string line;
 			getline(result_file , line);
-			std::cout << line << " 0"; // FIXME - czas w sekundach tu ma być.
+			std::cout << line << " " << older; // FIXME - czas w sekundach tu ma być.
 		} else {
 			throw ExecError(101002);
 		}
