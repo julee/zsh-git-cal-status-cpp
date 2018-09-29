@@ -14,6 +14,7 @@ struct Options
 	std::string	pwd_dir;
 	std::string	git_dir;
 	std::string	work_tree;
+	std::string	branch_master_override;
 	//int		num;
 	//bool		flag;
 
@@ -25,12 +26,13 @@ struct Options
 		, max_description_length)	// if option description eg. `--diff_max arg (=0.34999999999999998)` is longer than this, then explanation starts at next line
 	{
 		options.add_options()
-		("help,h"       ,"display this help.")
-		("pwd-dir"      ,po::value<std::string>(&pwd_dir      )->default_value(""),"current pwd directory")
-		("git-dir"      ,po::value<std::string>(&git_dir      )->default_value(""),"The --git-dir for git")
-		("work-tree"    ,po::value<std::string>(&work_tree    )->default_value(""),"The --work-tree for git")
-		//("num"          ,po::value<int        >(&num          )->default_value(1 ),"test number")
-		//("real"         ,po::bool_switch       (&flag         )->default_value(false),"test flag.")
+		("help,h"                 , "display this help.")
+		("pwd-dir"                , po::value<std::string>(&pwd_dir                )->default_value(""   ),"current pwd directory")
+		("git-dir"                , po::value<std::string>(&git_dir                )->default_value(""   ),"The --git-dir for git")
+		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
+		("branch-master-override" , po::value<std::string>(&branch_master_override )->default_value(""   ),"If the branch name is \"master\" then override it to given name")
+		//("num"                  , po::value<int        >(&num                    )->default_value(1    ),"test number")
+		//("flag"                 , po::bool_switch       (&flag                   )->default_value(false),"test flag.")
 		;
 
 		po::variables_map vm;

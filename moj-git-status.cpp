@@ -127,7 +127,8 @@ class GitParse {
 				}
 			}
 		}
-		std::string str() {
+		std::string str(const Options& opt) {
+			if((not opt.branch_master_override.empty()) and branch=="master") branch = opt.branch_master_override;
 			return       branch
 				+" "+boost::lexical_cast<std::string>(ahead     )
 				+" "+boost::lexical_cast<std::string>(behind    )
@@ -150,7 +151,7 @@ std::string gitParsedResult(const Options& opt) {
 		result.parse(line);
 	}
 
-	return result.str();
+	return result.str(opt);
 }
 
 int main(int argc, char** argv)
