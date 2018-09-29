@@ -11,6 +11,7 @@ struct Options
 	boost::program_options::options_description options;
 	po::variables_map vm_local;
 
+	std::string	pwd_dir;
 	std::string	git_dir;
 	std::string	work_tree;
 	//int		num;
@@ -25,6 +26,7 @@ struct Options
 	{
 		options.add_options()
 		("help,h"       ,"display this help.")
+		("pwd-dir"      ,po::value<std::string>(&pwd_dir      )->default_value(""),"current pwd directory")
 		("git-dir"      ,po::value<std::string>(&git_dir      )->default_value(""),"The --git-dir for git")
 		("work-tree"    ,po::value<std::string>(&work_tree    )->default_value(""),"The --work-tree for git")
 		//("num"          ,po::value<int        >(&num          )->default_value(1 ),"test number")
