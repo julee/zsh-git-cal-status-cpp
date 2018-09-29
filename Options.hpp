@@ -11,10 +11,10 @@ struct Options
 	boost::program_options::options_description options;
 	po::variables_map vm_local;
 
-	std::string	test;
-	int		num;
-	bool		all;
-	bool		real;
+	std::string	git_dir;
+	std::string	work_tree;
+	//int		num;
+	//bool		flag;
 
 	Options(int argc, char** argv, unsigned columns, unsigned max_description_length)
 	// to make it work put in `int main(……)`:
@@ -25,10 +25,10 @@ struct Options
 	{
 		options.add_options()
 		("help,h"       ,"display this help.")
-		("test"         ,po::value<std::string>(&test         )->default_value(""),"używam: fullDebugSendRequestWithApiKey")
-		("num"          ,po::value<int        >(&num          )->default_value(1 ),"test number")
-		("all"          ,po::bool_switch       (&all          )->default_value(false),"Run all tests, excluding real orders.")
-		("real"         ,po::bool_switch       (&real         )->default_value(false),"Also enable running real orders.")
+		("git-dir"      ,po::value<std::string>(&git_dir      )->default_value(""),"The --git-dir for git")
+		("work-tree"    ,po::value<std::string>(&work_tree    )->default_value(""),"The --work-tree for git")
+		//("num"          ,po::value<int        >(&num          )->default_value(1 ),"test number")
+		//("real"         ,po::bool_switch       (&flag         )->default_value(false),"test flag.")
 		;
 
 		po::variables_map vm;
@@ -48,11 +48,11 @@ struct Options
 		for (const auto& it : vm_local) {
 			os << prefix << "  " << it.first.c_str() << "   \t= ";
 			auto& value = it.second.value();
-			if	(auto v = boost::any_cast<double>(&value))	os << *v;
-			else if (auto v = boost::any_cast<int>(&value))		os << *v;
-			else if (auto v = boost::any_cast<size_t>(&value))	os << *v;
-			else if (auto v = boost::any_cast<bool>(&value))	os << (*v)?std::string("true"):std::string("false");
-			else if (auto v = boost::any_cast<std::string>(&value))	os << *v;
+			if	(auto v1 = boost::any_cast<double>(&value))		os << *v1;
+			else if (auto v2 = boost::any_cast<int>(&value))		os << *v2;
+			else if (auto v3 = boost::any_cast<size_t>(&value))		os << *v3;
+			else if (auto v4 = boost::any_cast<bool>(&value))		os <<(*v4)?std::string("true"):std::string("false");
+			else if (auto v5 = boost::any_cast<std::string>(&value))	os << *v5;
 			else	os << prefix << "error";
 			os << prefix << "\n";
 		}
