@@ -39,6 +39,7 @@ moj-git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 
 #include "Options.hpp"
 
+// XXX: te includy może się jeszcze przydadzą. Póki co to się kompiluje bez tych zakomentowanych.
 #include <stdexcept>
 #include <sys/wait.h>
 //#include <sys/ioctl.h>
@@ -55,15 +56,18 @@ moj-git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 
 //#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować.
 
-std::map<int,std::string> error_codes = {
-	  {0      , "ok" }
-	, {101001 , "brakuje --pwd_dir" }
-	, {101002 , "nie moze otworzyc pliku bufora" }
-	, {101002 , "różnica w sekundach miała wyjść <=0 a nie wyszła" }
-	, {101004 , "cannot stat file" }
-	, {101005 , "brakuje whoami" }
-	, {101006 , "failed to spawn orphan" }
+// FIXME - bez sensu, ta mapa wogóle nie jest używana
+#if 0
+std::map<std::string,std::string> error_codes = {
+/*0     */	  {"OK"                    , "OK" }
+/*101001*/	, {"missing_pwd"           , "brakuje --pwd_dir" }
+/*101002*/	, {"cant_open_result_file" , "nie moze otworzyc pliku bufora" }
+/*101003*/	, {"positive_seconds"      , "różnica w sekundach miała wyjść <=0 a nie wyszła" }
+/*101004*/	, {"cannot_stat_file"      , "cannot stat file" }
+/*101005*/	, {"missing_whoami"        , "brakuje whoami" }
+/*101006*/	, {"cannot_spawn"          , "failed to spawn orphan" }
 	};
+#endif
 
 std::string sanitize(std::string offending_string) {
 	std::string extr=":+-.=_,"; // () <> & na pewno nie mogą być, co do innych to nie wiem
@@ -72,8 +76,10 @@ std::string sanitize(std::string offending_string) {
 }
 
 struct ExecError : std::runtime_error {
-	ExecError(int x) : std::runtime_error("exec failed") , code{x} { }
+	ExecError(int x) : std::runtime_error("exec failed") , code{x} , msg{} { }
+	ExecError(const char* s) : std::runtime_error("exec failed") , code{0} , msg{s} { }
 	int code;
+	std::string msg;
 	const char* what() const noexcept override { return "exec error"; }
 };
 
@@ -105,7 +111,7 @@ int main(int argc, char** argv)
 	return result;
     } else {
 	//return result;
-	throw ExecError(code+rc);
+	throw ExecError(code + rc);
     }
 }
 
@@ -198,7 +204,7 @@ int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
 		if(older > 0) {
 		/*
 			if(do_throw) {
-				throw ExecError(101003);
+				throw ExecError("positive_seconds");//(101003);
 			} else
 		*/
 			{
@@ -209,7 +215,7 @@ int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
 	};
 /*
 	if(do_throw) {
-		throw ExecError(101004);
+		throw ExecError("positive_seconds");//(101004);
 	} else
 */
 	{
@@ -299,8 +305,8 @@ int main(int argc, char** argv)
 try {
 //	struct winsize w; ioctl(0, TIOCGWINSZ, &w);
 	Options opt(argc,argv/*,w.ws_col,15*/);//std::cerr << "pwd dir  : " << opt.pwd_dir << "\n"; //std::cerr << "git dir  : " << opt.git_dir << "\n";//std::cerr << "work tree: " << opt.work_tree << "\n";
-	if(opt.pwd_dir == "") throw ExecError(101001);
-	if(opt.whoami  == "") throw ExecError(101005);
+	if(opt.pwd_dir == "") throw ExecError("missing_pwd");//(101001);
+	if(opt.whoami  == "") throw ExecError("missing_whoami");//(101005);
 	//std::string whoami = exec("/usr/bin/whoami",100000);  //std::cerr << "whoami   : \"" << whoami     << "\"\n";
 	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+opt.whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));  //std::cerr << lockfile_name << "\n";
 	std::string lock_1st_fname = "/tmp/"+lockfile_name;
@@ -325,7 +331,7 @@ try {
 				std::cout << line << " " << older;
 				return 0;
 			} else {
-				throw ExecError(101002);
+				throw ExecError("cant_open_result_file");//(101002);
 			}
 		}
 	} else {
@@ -338,13 +344,19 @@ try {
 	if(err.code == 32768) { // fatal: Not a git repository - nie ma nic do pisnia.
 		return 0;
 	}
+/*
 	auto it = error_codes.find(err.code);
 	if(it != error_codes.end()) {
 //std::cerr << " : " << it->second << "\n";
 	} else {
 //std::cerr << " : unrecognized code\n";
 	}
-	std::cout << "err"+boost::lexical_cast<std::string>(err.code)+" 0 0 0 0 0 0 " << err.code;
+*/
+	if(err.msg.empty()) {
+		std::cout << "err"+boost::lexical_cast<std::string>(err.code)+" 0 0 0 0 0 0 " << err.code;
+	} else {
+		std::cout << "error:"+err.msg+" 0 0 0 0 0 0 " << err.code;
+	}
 	return err.code;
 }
 
