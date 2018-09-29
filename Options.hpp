@@ -52,6 +52,18 @@ struct Options
 		vm_local=vm;	
 	};
 
+	std::string rebuild() const {
+		std::string args{};
+		for (const auto& it : vm_local) {
+			//args+="--" + it.first + " ";
+			auto& value = it.second.value();
+			     if (auto v2 = boost::any_cast<int        >(&value))	args += " --"+it.first+" "+ boost::lexical_cast<std::string>( *v2 );
+			else if (auto v5 = boost::any_cast<std::string>(&value))	args += (*v5!="")?std::string(" --"+it.first+" "+ boost::lexical_cast<std::string>( *v5 )):std::string({});
+			else if (auto v4 = boost::any_cast<bool       >(&value))	args +=                    (*v4)?std::string(" --must-update-now"):std::string("");
+		}
+		return args;
+	}
+
 	void print(std::ostream& os=std::cout,std::string prefix="") const
 	{
 		os << prefix << "Settings: \n";
