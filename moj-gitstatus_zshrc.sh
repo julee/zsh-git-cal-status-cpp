@@ -46,12 +46,16 @@ function update_current_git_vars() {
 	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir ${PWD:A} --refresh-sec 2  2>/dev/null`
     fi
     if [[ "$1" == "d" ]]; then
+ZSH_THEME_GIT_PROMPT_PREFIX=""
+ZSH_THEME_GIT_PROMPT_SUFFIX="│"
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git      --work-tree=${HOME}     --branch-master-override dgit --refresh-sec  3   2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git      --work-tree=${HOME}     --branch-master-override d --refresh-sec  4   2>/dev/null`
     fi
     if [[ "$1" == "j" ]]; then
+ZSH_THEME_GIT_PROMPT_PREFIX="│"
+ZSH_THEME_GIT_PROMPT_SUFFIX="║"
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
-	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jgit --refresh-sec  5   2>/dev/null`
+	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override j --refresh-sec  6   2>/dev/null`
     fi
 
      __CURRENT_GIT_STATUS=("${(@s: :)_GIT_STATUS}")
@@ -101,8 +105,8 @@ git_super_status() {
 }
 
 # Default values for the appearance of the prompt. Configure at will.
-ZSH_THEME_GIT_PROMPT_PREFIX=" "
-ZSH_THEME_GIT_PROMPT_SUFFIX=""
+ZSH_THEME_GIT_PROMPT_PREFIX="<"
+ZSH_THEME_GIT_PROMPT_SUFFIX=">"
 ZSH_THEME_GIT_PROMPT_SEPARATOR="|"
 ZSH_THEME_GIT_PROMPT_BRANCH="%{$fg_bold[yellow]%}"
 ZSH_THEME_GIT_PROMPT_STAGED="%{$fg[green]%}%{●%G%}"
