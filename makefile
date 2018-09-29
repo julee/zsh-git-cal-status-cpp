@@ -9,7 +9,7 @@ all:
 	#-lboost_date_time -lstdc++ -lm -lQtCore -lQtGui -lpthread -lcpprest -lssl -lcrypto
 	#g++ -O1 -g moj-git-status.cpp -o moj-git-status -std=c++17 -lreadline -lboost_system -lboost_thread -lboost_date_time -lpthread -lCGAL -Wall -lmpfr -lgmp -I /usr/include/eigen3/ \
 
-	g++ -Ofast moj-git-status.cpp -o moj-git-status -std=c++14 -Wall -Wextra -Wpedantic -Wshadow -Wenum-compare -Wunreachable-code -Werror=narrowing -Werror=return-type \
+	g++ -Ofast moj-git-status.cpp -o moj-git-status.bin -std=c++14 -Wall -Wextra -Wpedantic -Wshadow -Wenum-compare -Wunreachable-code -Werror=narrowing -Werror=return-type \
 	-lboost_program_options
 run:
 	moj-git-status

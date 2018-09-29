@@ -22,13 +22,13 @@
  *
  * przykłądowe wywołania:
 
-moj-git-status --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd`
-moj-git-status --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd` --branch-master-override jg
+moj-git-status.bin --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd`
+moj-git-status.bin --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd` --branch-master-override jg
 
-moj-git-status --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd`
-moj-git-status --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd` --branch-master-override dg
+moj-git-status.bin --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd`
+moj-git-status.bin --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd` --branch-master-override dg
 
-moj-git-status --pwd-dir `pwd`
+moj-git-status.bin --pwd-dir `pwd`
 
  *
  *
