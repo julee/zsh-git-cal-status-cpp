@@ -15,6 +15,7 @@ struct Options
 	std::string	git_dir;
 	std::string	work_tree;
 	std::string	branch_master_override;
+	std::string	whoami;
 	int		refresh_sec;
 	bool		must_update_now;
 	//int		num;
@@ -33,6 +34,7 @@ struct Options
 		("git-dir"                , po::value<std::string>(&git_dir                )->default_value(""   ),"The --git-dir for git")
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
 		("branch-master-override" , po::value<std::string>(&branch_master_override )->default_value(""   ),"If the branch name is \"master\" then override it to given name")
+		("whoami"                 , po::value<std::string>(&whoami                 )->default_value(""   ),"output of whoami")
 		("refresh-sec"            , po::value<int        >(&refresh_sec            )->default_value(10   ),"time in seconds between a forced refresh")
 		("must-update-now"        , po::bool_switch       (&must_update_now        )->default_value(false),"If set, will force git updating right now.")
 		//("num"                  , po::value<int        >(&num                    )->default_value(1    ),"test number")

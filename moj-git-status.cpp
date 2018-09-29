@@ -18,6 +18,7 @@
  *    101002 : nie moze otworzyc pliku bufora
  *    101003 : różnica w sekundach miała wyjść <=0 a nie wyszła.
  *    101004 : cannot stat file.
+ *    101005 : brakuje whoami
  *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
  *    -100   : wynik specjalny - gdy nie udało się sprawdzić daty na pliku bufora.
  *
@@ -52,7 +53,14 @@ moj-git-status.bin --pwd-dir `pwd`
 
 //#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować.
 
-std::map<int,std::string> error_codes = {{0,"ok"},{101001,"brakuje --pwd_dir"},{101002,"nie moze otworzyc pliku bufora"},{101002,"różnica w sekundach miała wyjść <=0 a nie wyszła"},{101004,"cannot stat file"}};
+std::map<int,std::string> error_codes = {
+	  {0      , "ok" }
+	, {101001 , "brakuje --pwd_dir" }
+	, {101002 , "nie moze otworzyc pliku bufora" }
+	, {101002 , "różnica w sekundach miała wyjść <=0 a nie wyszła" }
+	, {101004 , "cannot stat file" }
+	, {101005 , "brakuje whoami" }
+	};
 
 std::string sanitize(std::string offending_string) {
 	std::string extr=":+-.=_,"; // () <> & na pewno nie mogą być, co do innych to nie wiem
@@ -211,8 +219,9 @@ try {
 //	struct winsize w; ioctl(0, TIOCGWINSZ, &w);
 	Options opt(argc,argv/*,w.ws_col,15*/);//std::cerr << "pwd dir  : " << opt.pwd_dir << "\n"; //std::cerr << "git dir  : " << opt.git_dir << "\n";//std::cerr << "work tree: " << opt.work_tree << "\n";
 	if(opt.pwd_dir == "") throw ExecError(101001);
-	std::string whoami = exec("/usr/bin/whoami",100000);  //std::cerr << "whoami   : \"" << whoami     << "\"\n";
-	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));  //std::cerr << lockfile_name << "\n";
+	if(opt.whoami  == "") throw ExecError(101005);
+	//std::string whoami = exec("/usr/bin/whoami",100000);  //std::cerr << "whoami   : \"" << whoami     << "\"\n";
+	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+opt.whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));  //std::cerr << lockfile_name << "\n";
 	std::string lock_1st_fname = "/tmp/"+lockfile_name;
 	std::string lock_2nd_fname = "/tmp/"+lockfile_name+"_RESULT";
 
