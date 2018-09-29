@@ -27,6 +27,8 @@ int main(int argc, char** argv)
  * kody_błędów:
  *    0      : nie ma problemów
  *    101001 : brakuje --pwd_dir
+ *    101002 : nie moze otworzyc pliku bufora
+ *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
  */
 
 #include "Options.hpp"
@@ -41,7 +43,7 @@ int main(int argc, char** argv)
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/lexical_cast.hpp>
 
-std::map<int,std::string> error_codes = {{0,"ok"},{101001,"brakuje --pwd_dir"}};
+std::map<int,std::string> error_codes = {{0,"ok"},{101001,"brakuje --pwd_dir"},{101002,"nie moze otworzyc pliku bufora"}};
 
 std::string sanitize(std::string offending_string) {
 	std::string extr=":+-.=_,"; // () <> & na pewno nie mogą być, co do innych to nie wiem
@@ -175,12 +177,21 @@ try {
 		boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
 		if(the_2nd_lock.try_lock()) {
 			// mamy otwarty plik result_file, można do niego pisać.
+			result_file << git_parsed_result;
 		} else {
 			// nie udało się do niego pisać, chociaż mamy wynik :(
 		}
 		std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
 	} else {
 		// nie udało się zakluczyć, zwracamy zawartość result_file
+		std::ifstream result_file(lock_2nd_fname);
+		if(result_file.is_open()) {
+			std::string line;
+			getline(result_file , line);
+			std::cout << line;
+		} else {
+			throw ExecError(101002);
+		}
 	}
 
 } catch(const ExecError& err) {
