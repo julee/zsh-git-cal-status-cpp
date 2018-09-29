@@ -35,7 +35,10 @@ int main(int argc, char** argv)
 #include <sys/ioctl.h>
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <boost/interprocess/sync/file_lock.hpp>
+
+std::map<int,std::string> error_codes = {{0,"ok"},{101,"brakuje --pwd_dir"}};
 
 std::string sanitize(std::string offending_string) {
 	std::string extr=":+-.=_,"; // () <> & na pewno nie mogą być, co do innych to nie wiem
@@ -67,6 +70,10 @@ std::string exec(const std::string& cmd, int code) {
     }
 }
 
+std::string gitParsedResult(const Options& /*opt*/) {
+	return "";
+}
+
 int main(int argc, char** argv)
 try {
 	struct winsize w; ioctl(0, TIOCGWINSZ, &w);
@@ -86,6 +93,7 @@ std::cerr << "touch    : \"" << touch      << "\"\n";
 
 	boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
 	if(the_1st_lock.try_lock()) {
+		std::string git_parsed_result = gitParsedResult(opt);
 		std::ofstream result_file(lock_2nd_fname);
 		boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
 		if(the_2nd_lock.try_lock()) {
@@ -93,11 +101,19 @@ std::cerr << "touch    : \"" << touch      << "\"\n";
 		} else {
 			// nie udało się do niego pisać, chociaż mamy wynik :(
 		}
+		std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
 	} else {
 		// nie udało się zakluczyć, zwracamy zawartość result_file
 	}
 
 } catch(const ExecError& err) {
+	std::cerr << "Error code " << err.code;
+	auto it = error_codes.find(err.code);
+	if(it != error_codes.end()) {
+		std::cerr << " : " << it->second << "\n";
+	} else {
+		std::cerr << " : unrecognized code\n";
+	}
 	std::cout << "unknown 0 0 0 0 0 0 " << err.code;
 }
 
