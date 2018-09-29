@@ -16,8 +16,9 @@
  *    0      : nie ma problemów
  *    101001 : brakuje --pwd_dir
  *    101002 : nie moze otworzyc pliku bufora
- *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
  *    101002 : różnica w sekundach miała wyjść <=0 a nie wyszła.
+ *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
+ *    -100   : wynik specjalny - gdy nie udało się sprawdzić daty na pliku bufora.
  *
  * przykłądowe wywołania:
 
@@ -237,5 +238,4 @@ try {
 	}
 	std::cout << "unknown 0 0 0 0 0 0 " << err.code;
 }
-
 
