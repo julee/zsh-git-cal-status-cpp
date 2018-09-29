@@ -18,6 +18,19 @@
  *    101002 : nie moze otworzyc pliku bufora
  *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
  *    101002 : różnica w sekundach miała wyjść <=0 a nie wyszła.
+ *
+ * przykłądowe wywołania:
+
+moj-git-status --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd`
+moj-git-status --git-dir /home/.janek-git/.git --work-tree=/home/janek --pwd-dir `pwd` --branch-master-override jg
+
+moj-git-status --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd`
+moj-git-status --git-dir ~/.dotfiles/.git --work-tree=$HOME --pwd-dir `pwd` --branch-master-override dg
+
+moj-git-status --pwd-dir `pwd`
+
+ *
+ *
  */
 
 #include "Options.hpp"
