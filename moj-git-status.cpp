@@ -25,8 +25,8 @@ int main(int argc, char** argv)
  *      [ branch ,   0   ,    0   ,     0     ,   0       ,    0    ,     0     , kod_błędu ]
  *
  * kody_błędów:
- *    0   : nie ma problemów
- *    101 : brakuje --pwd_dir
+ *    0      : nie ma problemów
+ *    101001 : brakuje --pwd_dir
  */
 
 #include "Options.hpp"
@@ -86,7 +86,8 @@ class GitParse {
 
 	public:
 		void parse(std::string s) {
-			if(s.substr(0,2)=="##") {
+			std::string start = s.substr(0,2);
+			if(start == "##") {
 				if (s == "## Initial commit on master") {
 					branch="master";
 					return;
@@ -108,6 +109,20 @@ class GitParse {
 					branch=sanitize(s.substr(3));
 				}
 			} else {
+				if(start == "??") {
+					++ untracked;
+					return;
+				}
+				if( find( conflict_strings.begin() , conflict_strings.end() , start ) != conflict_strings.end() ) {
+					++ conflicts;
+					return;
+				}
+				if(start[0] != ' ') {
+					++ staged;
+				}
+				if(start[1] != ' ') {
+					++ changed;
+				}
 			}
 		}
 		std::string str() {
@@ -124,7 +139,7 @@ class GitParse {
 std::string gitParsedResult(const Options& opt) {
 	std::string gdir  =""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
 	std::string wtree =""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
-	std::string git_porcelain = exec("/usr/bin/git "+gdir+wtree+" status --porcelain --branch",300000);
+	std::string git_porcelain = exec("/usr/bin/git "+gdir+wtree+" status --porcelain --branch",0);
 
 	GitParse result;
 	std::string line;
@@ -143,7 +158,7 @@ try {
 std::cerr << "pwd dir  : " << opt.pwd_dir   << "\n";
 std::cerr << "git dir  : " << opt.git_dir   << "\n";
 std::cerr << "work tree: " << opt.work_tree << "\n";
-	if(opt.pwd_dir == "") throw ExecError(101);
+	if(opt.pwd_dir == "") throw ExecError(101001);
 	std::string whoami = exec("/usr/bin/whoami",100000);
 std::cerr << "whoami   : \"" << whoami     << "\"\n";
 	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));
