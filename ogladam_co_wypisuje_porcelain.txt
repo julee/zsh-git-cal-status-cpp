@@ -1,0 +1,89 @@
+-- empty:` git status --porcelain --branch`
+
+## Initial commit on master
+
+-- empty, jeden plik:
+
+## Initial commit on master
+?? .gitignore
+
+-- jest 1 staged:
+
+## Initial commit on master
+A  .gitignore
+
+-- zrobiłem commit, nie zrobiłem pusha:
+## master
+
+-- zrobiłem pusha:
+## master...bkp/master
+-- echo "plik1" > plik1 ; git status --porcelain --branch
+## master...bkp/master
+?? plik1
+-- git add plik1 ; git status --porcelain --branch
+## master...bkp/master
+A  plik1
+-- git ci -m "plik1" ; git status --porcelain --branch
+## master...bkp/master [ahead 1]
+-- echo "plik2" > plik2 ; git status --porcelain --branch
+## master...bkp/master [ahead 1]
+?? plik2
+-- git add plik2 ; git status --porcelain --branch
+## master...bkp/master [ahead 2]
+-- git push ; 
+## master...bkp/master
+-- echo "plik2_" >> plik2
+## master...bkp/master
+ M plik2
+-- git ci --amend -am "plik2 amend"
+## master...bkp/master [ahead 1, behind 1]
+-- git pull
+## HEAD (no branch)
+AA plik2
+-- :62e2352|≠1✚1>$ git mg
+## HEAD (no branch)
+M  plik2
+?? plik2.orig
+-- rm plik2.orig
+-- git ci -am "merge"
+-- <:1fdd283|✓>$ git status --porcelain --branch
+## HEAD (no branch)
+-- <:1fdd283|✓>$ git merge 1fdd283 master
+## HEAD (no branch)
+-- git co master
+## master...bkp/master [ahead 1, behind 1]
+-- echo "plik3" >> plik3
+## master...origin/master
+?? plik3
+-- git add plik3
+## master...origin/master
+A  plik3
+-- git ci -am "plik3"
+## master...origin/master [ahead 1]
+-- git push
+## master...origin/master
+-- git fetch
+## master...bkp/master [ahead 1, behind 2]
+-- <master↓2↑1|✓>$ git pull ; git status --porcelain --branch
+## HEAD (no branch)
+AA plik2
+-- <master↓2↑1|✓>$ git merge b9749df master
+## master...bkp/master [ahead 3]
+-- git push
+## master...bkp/master
+-- echo "errtrttttttttttttt" >> plik3
+## master...origin/master
+ M plik3
+-- git ci -am "plik3 race condition"
+## master...origin/master [ahead 1]
+-- git ci -am "plik3 będzie konflikt"
+## master...bkp/master [ahead 1]
+-- git fetch
+## master...bkp/master [ahead 1, behind 1]
+-- git pull
+## HEAD (no branch)
+UU plik3
+-- git mg ; git ci -am "zmerdżowane"
+## HEAD (no branch)
+
+
