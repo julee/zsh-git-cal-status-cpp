@@ -202,7 +202,7 @@ int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
 			} else
 		*/
 			{
-				return -100;
+				return 1;
 			}
 		}
 		return older;
