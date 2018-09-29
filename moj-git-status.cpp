@@ -15,14 +15,14 @@ int main(int argc, char** argv)
  * 1. zakłada unikalny lockfile(…) dla podanych argumentów + whoami + pwd
  *    → jesli uda się go założyć to wywołuje git status --porcelain --branch --git-dir ARG1 --work-tree ARG2
  *    Zwraca:
- *      [ branch , ahead , behind , conflicts , added , changed , untracked , kod_błędu ]
+ *      [ branch , ahead , behind , staged    , conflicts , changed , untracked , kod_błędu ]
  *    Tylko gdy kod_błędu != 0, to reszta ma sens, w przeciwnym razie wskazuje co poszło źle w wywołaniu.
  *
  * 2. jeśli nie udało się założyć lockfile to:
  *    Zwraca wynik poprzedniego wywołania, jeśli taki istnieje
- *      [ branch , ahead , behind , conflicts , added , changed , untracked , kod_błędu ]
+ *      [ branch , ahead , behind , staged    , conflicts , changed , untracked , kod_błędu ]
  *    W przeciwnym razie zwraca tylko kod błędu:
- *      [ branch ,   0   ,    0   ,     0     ,   0   ,    0    ,     0     , kod_błędu ]
+ *      [ branch ,   0   ,    0   ,     0     ,   0       ,    0    ,     0     , kod_błędu ]
  *
  * kody_błędów:
  *    0   : nie ma problemów
@@ -35,8 +35,11 @@ int main(int argc, char** argv)
 #include <sys/ioctl.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <map>
+#include <vector>
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/lexical_cast.hpp>
 
 std::map<int,std::string> error_codes = {{0,"ok"},{101,"brakuje --pwd_dir"}};
 
@@ -70,8 +73,43 @@ std::string exec(const std::string& cmd, int code) {
     }
 }
 
-std::string gitParsedResult(const Options& /*opt*/) {
-	return "";
+class GitParse {
+	private:
+		std::string	branch    = "testuje";
+		int		ahead     = 0;
+		int		behind    = 0;
+		int		staged    = 0;
+		int		conflicts = 0;
+		int		changed   = 0;
+		int		untracked = 0;
+
+	public:
+		void parse(std::string) {
+		}
+		std::string str() {
+			return       branch
+				+" "+boost::lexical_cast<std::string>(ahead     )
+				+" "+boost::lexical_cast<std::string>(behind    )
+				+" "+boost::lexical_cast<std::string>(staged    )
+				+" "+boost::lexical_cast<std::string>(conflicts )
+				+" "+boost::lexical_cast<std::string>(changed   )
+				+" "+boost::lexical_cast<std::string>(untracked );
+		}
+};
+
+std::string gitParsedResult(const Options& opt) {
+	std::string gdir  =""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
+	std::string wtree =""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
+	std::string git_porcelain = exec("/usr/bin/git "+gdir+wtree+" status --porcelain --branch",300000);
+
+	GitParse result;
+	std::string line;
+	std::istringstream ss_result(git_porcelain);
+	while (getline(ss_result, line, '\n')) {
+		result.parse(line);
+	}
+
+	return result.str();
 }
 
 int main(int argc, char** argv)
@@ -82,13 +120,13 @@ std::cerr << "pwd dir  : " << opt.pwd_dir   << "\n";
 std::cerr << "git dir  : " << opt.git_dir   << "\n";
 std::cerr << "work tree: " << opt.work_tree << "\n";
 	if(opt.pwd_dir == "") throw ExecError(101);
-	std::string whoami = exec("/usr/bin/whoami",1000);
+	std::string whoami = exec("/usr/bin/whoami",100000);
 std::cerr << "whoami   : \"" << whoami     << "\"\n";
 	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));
 std::cerr << lockfile_name << "\n";
 	std::string lock_1st_fname = "/tmp/"+lockfile_name;
 	std::string lock_2nd_fname = "/tmp/"+lockfile_name+"_RESULT";
-	std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,2000);
+	std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);
 std::cerr << "touch    : \"" << touch      << "\"\n";
 
 	boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
