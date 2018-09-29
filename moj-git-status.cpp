@@ -188,19 +188,19 @@ try {
 		if(result_file.is_open()) {
 			std::string line;
 			getline(result_file , line);
-			std::cout << line;
+			std::cout << line << " 0"; // FIXME - czas w sekundach tu ma być.
 		} else {
 			throw ExecError(101002);
 		}
 	}
 
 } catch(const ExecError& err) {
-	std::cerr << "Error code " << err.code;
+//std::cerr << "Error code " << err.code;
 	auto it = error_codes.find(err.code);
 	if(it != error_codes.end()) {
-		std::cerr << " : " << it->second << "\n";
+//std::cerr << " : " << it->second << "\n";
 	} else {
-		std::cerr << " : unrecognized code\n";
+//std::cerr << " : unrecognized code\n";
 	}
 	std::cout << "unknown 0 0 0 0 0 0 " << err.code;
 }
