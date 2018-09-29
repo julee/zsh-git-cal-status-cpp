@@ -94,7 +94,7 @@ class GitParse {
 				}
 				std::size_t pos_dots = s.find("...");
 				if (pos_dots != std::string::npos) {
-					branch=sanitize(s.substr(3,pos_dots));
+					branch=sanitize(s.substr(3,pos_dots-3));
 					std::size_t pos_ahead  = s.find("ahead");
 					if (pos_ahead != std::string::npos) {
 						std::istringstream ss(s.substr(pos_ahead  + 6));
