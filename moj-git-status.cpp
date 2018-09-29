@@ -230,6 +230,9 @@ try {
 
 } catch(const ExecError& err) {
 //std::cerr << "Error code " << err.code;
+	if(err.code == 32768) { // fatal: Not a git repository - nie ma nic do pisnia.
+		return 0;
+	}
 	auto it = error_codes.find(err.code);
 	if(it != error_codes.end()) {
 //std::cerr << " : " << it->second << "\n";
