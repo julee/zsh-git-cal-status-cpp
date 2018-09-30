@@ -123,7 +123,7 @@ ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_bold[green]%}%{✓%G%}"
 
 # ●  staged
 # ≠  conflicts
-# ✚  changed
+# ✚  changed , może zmienić na + ?
 # ↑  ahead
 # ↓  behind
 # …  untracked
