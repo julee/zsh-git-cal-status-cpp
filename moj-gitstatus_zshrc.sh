@@ -46,7 +46,7 @@ function update_current_git_vars() {
 	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir ${PWD:A} --refresh-sec 2  2>/dev/null`
     fi
     if [[ "$1" == "d" ]]; then
-ZSH_THEME_GIT_PROMPT_PREFIX=""
+ZSH_THEME_GIT_PROMPT_PREFIX="│"
 ZSH_THEME_GIT_PROMPT_SUFFIX="│"
 ZSH_THEME_GIT_PROMPT_SEPARATOR=""
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
@@ -54,7 +54,7 @@ ZSH_THEME_GIT_PROMPT_SEPARATOR=""
     fi
     if [[ "$1" == "j" ]]; then
 ZSH_THEME_GIT_PROMPT_PREFIX="│"
-ZSH_THEME_GIT_PROMPT_SUFFIX="│"
+ZSH_THEME_GIT_PROMPT_SUFFIX=""
 ##"║"
 ZSH_THEME_GIT_PROMPT_SEPARATOR=""
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
