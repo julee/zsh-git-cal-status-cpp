@@ -48,12 +48,15 @@ function update_current_git_vars() {
     if [[ "$1" == "d" ]]; then
 ZSH_THEME_GIT_PROMPT_PREFIX=""
 ZSH_THEME_GIT_PROMPT_SUFFIX="│"
+ZSH_THEME_GIT_PROMPT_SEPARATOR=""
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
 	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git      --work-tree=${HOME}     --branch-master-override d --refresh-sec  4   2>/dev/null`
     fi
     if [[ "$1" == "j" ]]; then
 ZSH_THEME_GIT_PROMPT_PREFIX="│"
-ZSH_THEME_GIT_PROMPT_SUFFIX="║"
+ZSH_THEME_GIT_PROMPT_SUFFIX="│"
+##"║"
+ZSH_THEME_GIT_PROMPT_SEPARATOR=""
 	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
 	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override j --refresh-sec  6   2>/dev/null`
     fi
