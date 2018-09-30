@@ -96,6 +96,7 @@ git_super_status() {
 	  if [ "$GIT_UNTRACKED" -ne "0" ]; then
 		  STATUS="$STATUS$ZSH_THEME_GIT_PROMPT_UNTRACKED%{${reset_color}%}"
 	  fi
+### ten jest przydatny do debugowania - wyświetla ile sekund temu było odświeżane.
 #	  if [ "$GIT_SECONDS_OR_ERROR" -ne "0" ]; then
 #		  STATUS="$STATUS$GIT_SECONDS_OR_ERROR$ZSH_THEME_GIT_PROMPT_SEC_ERR%{${reset_color}%}"
 #	  fi

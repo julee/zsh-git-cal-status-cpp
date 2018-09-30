@@ -54,7 +54,7 @@ moj-git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 //#include <boost/date_time/posix_time/conversion.hpp> // boost:::to_time_t(ptime pt) - ilość sekund od 1970.
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-//#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować.
+//#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować. -lboost_system -lboost_filesystem 
 
 // FIXME - bez sensu, ta mapa wogóle nie jest używana
 #if 0
@@ -206,6 +206,11 @@ int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
 		auto mod_time = result.st_mtime;
 		boost::posix_time::ptime when(boost::posix_time::from_time_t(mod_time)         );
 		boost::posix_time::ptime now (boost::posix_time::second_clock::universal_time());
+
+	// FIXME - jednak tego nie linkuję, żeby mieć boost::filesystem::rename, więc tutaj też mogę to użyć.
+	//         https://beta.boost.org/doc/libs/1_47_0/libs/filesystem/v3/doc/reference.html#last_write_time
+	//	//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname); // rezygnuję, bo trzeba linkować.
+
 		int older = (when-now).total_seconds(); // powinno wyjść ujemne.
 		if(older > 0) {
 		/*
@@ -300,8 +305,16 @@ void update_git_status(const std::string& lock_1st_fname, const std::string& loc
 			result_file << git_parsed_result;
 			result_file.close();
 			the_2nd_lock.unlock();
+		/* zamiast tego użyję boosta
 			std::string command = "/bin/mv -f "+lock_2nd_fname+" "+lock_3rd_fname;
 			system(command.c_str());
+		*/
+		// FIXME - jednak tego nie linkuję, żeby mieć boost::filesystem::rename, więc tutaj też mogę to użyć.
+		//         https://beta.boost.org/doc/libs/1_47_0/libs/filesystem/v3/doc/reference.html#last_write_time
+		//	boost::filesystem::rename(lock_2nd_fname,lock_3rd_fname);
+		// eee, spróbuję samo polecenie rename ze <stdio.h>:
+			/*int error_code =*/ rename(lock_2nd_fname.c_str() , lock_3rd_fname.c_str());
+			// ignoruję kod błędu, co mnie obchodzi czy to się udało. I tak nic na to nie poradzę.
 		} // else // nie udało się do niego pisać, chociaż mamy wynik :(
 	//	std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
 	}
