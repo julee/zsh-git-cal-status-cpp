@@ -293,13 +293,19 @@ void spawn_myself(const Options& opt, char** argv) {
 
 void update_git_status(const std::string& lock_1st_fname, const std::string& lock_2nd_fname, const std::string& lock_3rd_fname, const Options& opt) {
 	//std::cerr << "\n-must_update_now-\n";
+/* resygnuję z touch, sam utworze ten plik.
 	std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);  //std::cerr << "touch    : \"" << touch      << "\"\n";
+*/
+	std::ofstream touch_file(lock_1st_fname);
+	if(touch_file.is_open()) {
+		touch_file.close();
+	}
 	// https://www.boost.org/doc/libs/1_68_0/doc/html/boost/interprocess/file_lock.html
 	boost::interprocess::file_lock the_1st_lock(lock_1st_fname.c_str());
 	if(the_1st_lock.try_lock()) {
 		std::ofstream result_file(lock_2nd_fname);
 		boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
-		if(the_2nd_lock.try_lock()) {
+		if(the_2nd_lock.try_lock() and result_file.is_open()) {
 			// mamy otwarty plik result_file, można do niego pisać.
 			std::string git_parsed_result = gitParsedResult(opt);
 			result_file << git_parsed_result;
