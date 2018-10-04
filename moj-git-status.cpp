@@ -34,6 +34,11 @@ moj-git-status.bin --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git 
 moj-git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 
  *
+ * FIXME: w sumie on też mógłby robić ten kalendarze, wywołanie gita, żeby mieć daty commitów:
+ *   git log --no-merges --pretty=format:"%at" --since="13 months"
+ *   git log --no-merges --pretty=format:"%at"
+ *   git log --no-merges --pretty=format:"%at" --author="$author"
+ *   git log --no-merges --pretty=format:"%at" --author="$author" --all // --all oznacza commity all branches.
  *
  */
 
