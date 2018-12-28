@@ -47,17 +47,13 @@ struct DayInfo {
 std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > calcStreak(const std::set<int>& streaks) {
 	if(streaks.empty()) return {boost::none,boost::none};
 
+// FIXME - duplikat z main
 	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
 	boost::posix_time::ptime now_date_LOC{now_local_date};
+// FIXME - end
+
 	int cur_start{-1},cur_end{-1},lon_start{-1},lon_end{-1};//,tmp_start{-1},tmp_end{-1};
 
-/*
-	std::vector<int> streaks_sorted{};
-	for(const auto& i : streaks) { streaks_sorted.push_back(i); }
-	std::sort(streaks_sorted.begin(),streaks_sorted.end());
-*/
-
-//std::cerr << "LAST: "<< *streaks.rbegin() << "\n";
 	std::vector<int> cal( *streaks.rbegin()+1 , 0);
 	for(const auto& i : streaks) { cal[i] = 1; }
 	for(size_t i=1 ; i<cal.size() ; ++i) { if((cal[i] != 0) and (cal[i-1] != 0)) cal[i] = cal[i-1]+1; }
@@ -81,7 +77,7 @@ std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost
 	}
 
 
-/*
+/* inna metoda, ale ma błąd, źle commity Bruno z 2014 roku.
 	for(const auto& i : streaks_sorted) {
 		if(tmp_start == -1) {
 			tmp_end   = i;
@@ -132,6 +128,29 @@ void printStreaks(const std::set<int>& streaks) {
 	std::cout << "\n";
 }
 
+void printAuthorSummary(const AuthorsCount& authors_count, size_t longest_author, const OptionsCal& opt) {
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter; // FIXME - duplikat z int main()
+	std::vector<std::pair<std::wstring,AuthorStreak> > authors_count_sorted{};
+	for(const auto& aa : authors_count) {
+		authors_count_sorted.push_back({aa.first,aa.second});
+	}
+	std::sort(authors_count_sorted.begin(), authors_count_sorted.end() ,
+		[](const std::pair<std::wstring,AuthorStreak>& a, const std::pair<std::wstring,AuthorStreak>& b)->bool { return a.second.count > b.second.count; });
+	int printed=0;
+	for(const auto& aa : authors_count_sorted) {
+		std::string spaces{};
+		int len=longest_author+1 - aa.first.size();
+		while(--len>0) spaces+=" ";
+		if(longest_author>3) {
+			std::cout << spaces << converter.to_bytes(aa.first) << " : " << std::setw(4) << aa.second.count << " ";
+		} else {
+			std::cout << std::setw(4) << aa.second.count << " ";
+		}
+		std::cout << "total commits.";
+		printStreaks(aa.second.streaks);
+		if(++printed >= opt.print_authors) break;
+	}
+}
 
 struct Dot {
 	int q1{0},q2{0},q3{0};
@@ -282,6 +301,7 @@ int main(int argc, char** argv)
 
 	ss.str("");
 	std::set<int> total_streaks{};
+	AuthorsCount total_authors_count{};
 	for(int y = years-1 ; y>=0 ; --y) {
 		//std::cout <<         "                                                        "<<current_year-y<<"\n";
 		bool just_printed=false;
@@ -333,6 +353,8 @@ int main(int argc, char** argv)
 					for(const auto& aa : count_per_day[days_back].authors) {
 						authors_count[aa.first].count += aa.second.count;
 						authors_count[aa.first].streaks.insert(days_back);
+						total_authors_count[aa.first].count += aa.second.count;
+						total_authors_count[aa.first].streaks.insert(days_back);
 						total_streaks.insert(days_back);
 					}
 					boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
@@ -343,27 +365,8 @@ int main(int argc, char** argv)
 			}
 			std::cout << "\n";
 		}
-		if(opt.print_authors != 0 or opt.print_streaks)
-		{
-			std::vector<std::pair<std::wstring,AuthorStreak> > authors_count_sorted{};
-			for(const auto& aa : authors_count) {
-				authors_count_sorted.push_back({aa.first,aa.second});
-			}
-			std::sort(authors_count_sorted.begin(), authors_count_sorted.end() , [](const std::pair<std::wstring,AuthorStreak>& a, const std::pair<std::wstring,AuthorStreak>& b)->bool { return a.second.count > b.second.count; });
-			int printed=0;
-			for(const auto& aa : authors_count_sorted) {
-				std::string spaces{};
-				int len=longest_author+1 - aa.first.size();
-				while(--len>0) spaces+=" ";
-				if(longest_author>3) {
-					std::cout << spaces << converter.to_bytes(aa.first) << " : " << std::setw(4) << aa.second.count << " ";
-				} else {
-					std::cout << std::setw(4) << aa.second.count << " ";
-				}
-				std::cout << "total commits.";
-				printStreaks(aa.second.streaks);
-				if(++printed >= opt.print_authors) break;
-			}
+		if(opt.print_authors != 0 or opt.print_streaks) {
+			printAuthorSummary(authors_count , longest_author, opt);
 		}
 	}
 	std::cout << "\n                                                                                         Less ";
@@ -372,4 +375,8 @@ int main(int argc, char** argv)
 	std::cout << std::setw(4) << commits.size() << " total commits since "<< start.date() <<".";
 	printStreaks(total_streaks);
 	std::cout << "\n";
+
+	if(opt.print_authors != 0) {
+		printAuthorSummary(total_authors_count , longest_author, opt);
+	}
 }
