@@ -344,7 +344,7 @@ int main(int argc, char** argv)
 				std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > stt = calcStreak(aa.second.streaks);
 				std::cout << " Total commits.";
 				if(stt.first) {
-					std::cout << " Logest streak "<< std::ceil(double(stt.first.get().length().hours())/24.0)
+					std::cout << " Longest streak "<< std::ceil(double(stt.first.get().length().hours())/24.0)
 					<< " days (" << stt.first.get().begin().date() << " " << stt.first.get().last().date() << ").";
 					if(stt.second) {
 						std::cout << " Current streak: " << std::ceil(double(stt.second.get().length().hours())/24.0) <<" days";
