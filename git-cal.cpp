@@ -255,7 +255,12 @@ int main(int argc, char** argv)
 				std::string spaces{};
 				int len=longest_author+1 - aa.first.size();
 				while(--len>0) spaces+=" ";
-				std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second.count << "\n";
+				if(longest_author>3) {
+					std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second.count;
+				} else {
+					std::cout << std::setw(4) << aa.second.count;
+				}
+				std::cout << " Total commits\n";
 				if(++printed >= opt.print_authors) break;
 			}
 		}
