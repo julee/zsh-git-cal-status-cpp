@@ -49,6 +49,7 @@ std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost
 
 // FIXME - duplicate from int main(), because I am lazy
 	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
+	// I need ptime, with truncated hours.
 	boost::posix_time::ptime now_date_LOC{now_local_date};
 // FIXME - end
 
@@ -223,7 +224,9 @@ int main(int argc, char** argv)
 // Calculate how many years passed since year 1975, also record present time `now` in UTC as well as in local clock. Will be used later too.
 	boost::posix_time::ptime date1970(boost::gregorian::date(1970,1,1));
 	auto        now            = boost::posix_time::second_clock::universal_time();
-	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
+	auto        now_local      = boost::posix_time::second_clock::local_time();
+	auto        now_local_date = now_local.date();
+	auto        diff_UTC_local = now - now_local;
 	boost::posix_time::ptime now_date_UTC{now.date()};
 	boost::posix_time::ptime now_date_LOC{now_local_date};
 	int         years_max      = (now - date1970).hours()/24/365.25 - 5;
@@ -273,7 +276,10 @@ int main(int argc, char** argv)
 // Calculate how many commits were done per day, also track each author separetely
 	std::vector<DayInfo> count_per_day(days , {0,{}} );
 	for(auto& that_commit_UTC : commits) {
-		int idx = ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24;
+//std::cerr << that_commit_UTC.time << " " << ( that_commit_UTC.time - diff_UTC_local ) << "\n";
+//		int idx = ( now_date_UTC - boost::posix_time::ptime( that_commit_UTC.time                   .date()) ).hours()/24;
+		// I need difference between dates with truncated hours, so that one second after midnight becomes full 24 hours.
+		int idx = ( now_date_LOC - boost::posix_time::ptime((that_commit_UTC.time - diff_UTC_local ).date()) ).hours()/24;
 		count_per_day[ idx ].count += 1;
 		count_per_day[ idx ].authors[that_commit_UTC.author].count += 1;
 	}
