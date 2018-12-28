@@ -68,6 +68,11 @@ struct Dot {
 	}
 };
 
+struct CommitInfo {
+	boost::posix_time::ptime time;
+	std::string author;
+};
+
 int main(int argc, char** argv)
 {
 	OptionsCal opt(argc,argv);
@@ -91,7 +96,7 @@ int main(int argc, char** argv)
 	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at %aN\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\""+author);
 
 	size_t newlines = std::count(git_cal_result.begin(), git_cal_result.end(), '\n');
-	std::vector<boost::posix_time::ptime> commits;
+	std::vector<CommitInfo> commits;
 	commits.reserve(newlines+10);
 	std::string tmp;
 	std::stringstream ss(git_cal_result);
@@ -99,11 +104,14 @@ int main(int argc, char** argv)
 		std::stringstream tt(tmp);
 		time_t time{0};
 		tt >> time;
-		commits.push_back( boost::posix_time::from_time_t( boost::lexical_cast<time_t>( time ) ) );
+		std::string aut{};
+		std::getline(tt,aut,'\n');
+//std::cerr << aut << "\n";
+		commits.push_back( { boost::posix_time::from_time_t( boost::lexical_cast<time_t>( time ) ) , aut } );
 	}
 
-	std::sort(commits.rbegin(),commits.rend()); // w sumie to już jest posortowane, to tak tylko dla pewności
-	auto start = *commits.rbegin();
+	std::sort(commits.rbegin() , commits.rend() , [](const CommitInfo& a, const CommitInfo& b)->bool { return a.time < b.time; } ); // w sumie to już jest posortowane, to tak tylko dla pewności
+	auto start = commits.rbegin()->time;
 
 	int WEEKS = 52;
 	int days  = (now-start).hours()/24+1;
@@ -117,7 +125,9 @@ int main(int argc, char** argv)
 	days=years*WEEKS*7 - (6-day_of_week);
 	std::vector<int> count_per_day(days , 0);
 
-	for(auto& that_commit_UTC : commits) { count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.date()) ).hours()/24 ] += 1; }
+	for(auto& that_commit_UTC : commits) {
+		count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24 ] += 1;
+	}
 
 	// no to mam teraz licznik ile było każdego dnia. Zaokrąglony do wielokrotności 52-tygodni w górę
 	Dot dot(count_per_day);
