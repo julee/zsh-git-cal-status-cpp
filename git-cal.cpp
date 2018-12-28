@@ -373,6 +373,7 @@ int main(int argc, char** argv)
 			}
 			std::cout << "\n";
 		}
+		// When whole year is printed, then print the summary for this year
 		if(opt.print_authors != 0 or opt.print_streaks) {
 			printAuthorSummary(authors_count , longest_author, opt);
 		}
