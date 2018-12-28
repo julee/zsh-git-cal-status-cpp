@@ -82,8 +82,8 @@ int main(int argc, char** argv)
 //	std::cout << git_cal_result << "\n" << "\n" << newlines << "\n";
 	for(auto& that_commit_UTC : commits) {
 //		std::cout << a << " " << a.date().year() << " " << a.date().month()  << " " << a.date().day() << "\n";
-		std::cout << that_commit_UTC << "\n";
-		count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.date()) /* + UTC_local */ ).hours()/24 ] += 1;
+//		std::cout << that_commit_UTC << "\n"; // o dziwo on to teraz dobrze liczy. Tzn lepiej niż git-cal perlowy.
+		count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.date()) ).hours()/24 ] += 1;
 	}
 
 
