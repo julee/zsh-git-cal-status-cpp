@@ -2,6 +2,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <algorithm>
 #include <sstream>
+#include <codecvt>
 
 // FIXME - duplikat z moj-git-status.cpp, bom leniwy
 std::string exec(const std::string& cmd) {
@@ -24,12 +25,14 @@ std::string exec(const std::string& cmd) {
 
 struct CommitInfo {
 	boost::posix_time::ptime time;
-	std::string author;
+	std::wstring author;
 };
+
+typedef std::map<std::wstring,int> AuthorsCount;
 
 struct DayInfo {
 	int count;
-	std::map<std::string,int> authors;
+	AuthorsCount authors;
 };
 
 struct Dot {
@@ -105,6 +108,7 @@ int main(int argc, char** argv)
 	commits.reserve(newlines+10);
 	std::string tmp;
 	std::stringstream ss(git_cal_result);
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 	while(std::getline(ss,tmp,'\n')) {
 		std::stringstream tt(tmp);
 		time_t time{0};
@@ -112,7 +116,7 @@ int main(int argc, char** argv)
 		std::string aut{};
 		std::getline(tt,aut,'\n');
 //std::cerr << aut << "\n";
-		commits.push_back( { boost::posix_time::from_time_t( boost::lexical_cast<time_t>( time ) ) , aut } );
+		commits.push_back( { boost::posix_time::from_time_t( boost::lexical_cast<time_t>( time ) ) , converter.from_bytes(aut) } );
 	}
 
 	std::sort(commits.rbegin() , commits.rend() , [](const CommitInfo& a, const CommitInfo& b)->bool { return a.time < b.time; } ); // w sumie to już jest posortowane, to tak tylko dla pewności
@@ -131,7 +135,10 @@ int main(int argc, char** argv)
 	std::vector<DayInfo> count_per_day(days , {0,{}} );
 
 	for(auto& that_commit_UTC : commits) {
-		count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24 ].count += 1;
+		int idx = ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24;
+		count_per_day[ idx ].count += 1;
+		count_per_day[ idx ].authors[that_commit_UTC.author] += 1;
+//std::cerr << that_commit_UTC.author << " " << count_per_day[ idx ].authors[that_commit_UTC.author] << "\n";
 	}
 
 	// no to mam teraz licznik ile było każdego dnia. Zaokrąglony do wielokrotności 52-tygodni w górę
@@ -168,6 +175,7 @@ int main(int argc, char** argv)
 		bool just_printed=false;
 		bool got_year=false;
 		int prev_month=-1;
+		AuthorsCount authors_count;
 		std::string months_str("      ");//po tych spacjach zaczyna pisać nazwy miesięcy
 		std::string year_str(months_str);
 		for(int w=0 ; w<WEEKS ; ++w) {
@@ -210,6 +218,9 @@ int main(int argc, char** argv)
 				if(days_back != -1) {
 					assert(days_back >=0 and days_back<days);
 					int val = count_per_day[days_back].count;
+					for(const auto& aa : count_per_day[days_back].authors) {
+						authors_count[aa.first]+=aa.second;
+					}
 					boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
 					dot.print(val,then,opt);
 				} else {
@@ -217,6 +228,12 @@ int main(int argc, char** argv)
 				}
 			}
 			std::cout << "\n";
+		}
+		for(const auto& aa : authors_count) {
+			std::string spaces{};
+			int len=20-aa.first.size();
+			while(--len>0) spaces+=" ";
+			std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second << "\n";
 		}
 	}
 	std::cout << "\n                                                                                         Less ";
