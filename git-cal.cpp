@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <sstream>
 #include <codecvt>
+#include <boost/optional.hpp>
+//#include <boost/optional/optional_io.hpp>
 
 // FIXME - duplikat z moj-git-status.cpp, bom leniwy
 std::string exec(const std::string& cmd) {
@@ -30,8 +32,8 @@ struct CommitInfo {
 
 struct AuthorStreak {
 	int count{0};
-	boost::gregorian::date start{boost::gregorian::date(1970,1,1)};
-	boost::gregorian::date end  {boost::gregorian::date(1970,1,1)};
+	// one są wyrażone w jednostkach days_back
+	std::set<int> streaks{};
 };
 
 typedef std::map<std::wstring,AuthorStreak> AuthorsCount;
@@ -40,6 +42,45 @@ struct DayInfo {
 	int count;
 	AuthorsCount authors;
 };
+
+std::pair<boost::posix_time::time_period ,boost::optional<boost::posix_time::time_period> > calcStreak(const std::set<int>& streaks) {
+	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
+	boost::posix_time::ptime now_date_LOC{now_local_date};
+	int cur_start{-1},cur_end{-1},lon_start{-1},lon_end{-1},tmp_start{-1},tmp_end{-1};
+	for(const auto& i : streaks) {
+		if(tmp_start == -1) {
+			tmp_start = i;
+			tmp_end   = i;
+		} else {
+			if( i - tmp_end == 1) {
+				tmp_end = i;
+			} else {
+				if(tmp_start == 0) {
+					cur_start = tmp_start;
+					cur_end   = tmp_end;
+				}
+				if( (tmp_end - tmp_start) > (lon_end - lon_start) ) {
+					lon_start = tmp_start;
+					lon_end   = tmp_end;
+				}
+				tmp_start = i;
+				tmp_end   = i;
+			}
+		}
+	}
+	// aj, odwrotnie mam start↔end , bo numerki w std::set<int> lecą wstecz
+	std::swap(lon_end,lon_start);
+	std::swap(cur_end,cur_start);
+	boost::posix_time::ptime then1 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(lon_start  )));
+	boost::posix_time::ptime then2 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(lon_end  -1)));
+	boost::posix_time::ptime then3 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(cur_start  )));
+	boost::posix_time::ptime then4 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(cur_end  -1)));
+	boost::optional<boost::posix_time::time_period> ret2=boost::none;
+	if(cur_start != -1) {
+		ret2 = { then3 , then4 };
+	}
+	return { { then1 , then2 } , ret2 };
+}
 
 struct Dot {
 	int q1{0},q2{0},q3{0};
@@ -234,6 +275,7 @@ int main(int argc, char** argv)
 					int val = count_per_day[days_back].count;
 					for(const auto& aa : count_per_day[days_back].authors) {
 						authors_count[aa.first].count += aa.second.count;
+						authors_count[aa.first].streaks.insert(days_back);
 					}
 					boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
 					dot.print(val,then,opt);
@@ -256,11 +298,17 @@ int main(int argc, char** argv)
 				int len=longest_author+1 - aa.first.size();
 				while(--len>0) spaces+=" ";
 				if(longest_author>3) {
-					std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second.count;
+					std::cout << spaces << converter.to_bytes(aa.first) << " : " << std::setw(4) << aa.second.count;
 				} else {
 					std::cout << std::setw(4) << aa.second.count;
 				}
-				std::cout << " Total commits\n";
+				std::pair<boost::posix_time::time_period ,boost::optional<boost::posix_time::time_period> > stt = calcStreak(aa.second.streaks);
+				std::cout << " Total commits. Logest streak "<< std::ceil(double(stt.first.length().hours())/24.0)
+				<< " days (" << stt.first.begin().date() << " " << stt.first.last().date() << ").";
+				if(stt.second) {
+					std::cout << " Current streak: " << std::ceil(double(stt.second.get().length().hours())/24.0) <<" days";
+				}
+				std::cout << "\n";
 				if(++printed >= opt.print_authors) break;
 			}
 		}
