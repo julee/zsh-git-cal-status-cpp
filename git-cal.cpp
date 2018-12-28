@@ -1,4 +1,4 @@
-#include "Options.hpp"
+#include "OptionsCal.hpp"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <algorithm>
 
@@ -23,7 +23,7 @@ std::string exec(const std::string& cmd) {
 
 struct Dot {
 	int q1{0},q2{0},q3{0};
-	static constexpr int colors[]={ 237, 139, 40, 190, 1 };
+	const std::vector<int> colors={ 237, 139, 40, 190, 1 };
 	Dot(const std::vector<int>& cc) {
 		std::vector<int> vv{};
 		for(const auto& a:cc) { if(a!=0) vv.push_back(a); }
@@ -35,19 +35,22 @@ struct Dot {
 		q3=vv[3*s/4];
 //		std::cerr << vv[0] << " " << q1 << " " << q2 << " " << q3 << "\n";
 	};
-	void print(int val) {
+	void print(int val , const boost::posix_time::ptime& then, const OptionsCal& opt) {
 		int index=   val == 0  ? 0
 			   : val <= q1 ? 1
 			   : val <= q2 ? 2
 			   : val <= q3 ? 3
 				       : 4;
+		put(index);
+	};
+	void put(int index) {
 		std::cout <</* val <<*/ "\e[38;5;"<<(boost::lexical_cast<std::string>(colors[index]))<<"m◼ \e[0m";
-	}
+	};
 };
 
 int main(int argc, char** argv)
 {
-	Options opt(argc,argv);
+	OptionsCal opt(argc,argv);
 //opt.print();
 	std::string gdir  = ""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
 	std::string wtree = ""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
@@ -58,6 +61,7 @@ int main(int argc, char** argv)
 	auto        now            = boost::posix_time::second_clock::universal_time();
 	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
 	boost::posix_time::ptime now_date_UTC{now.date()};
+	boost::posix_time::ptime now_date_LOC{now_local_date};
 	int         yy             = (now - date1970).hours()/24/365 - 5;
 
 	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\""+author);
@@ -116,6 +120,32 @@ int main(int argc, char** argv)
 
 	for(int y = years-1 ; y>=0 ; --y) {
 		std::cout <<         "                                                        "<<current_year-y<<"\n";
+		bool just_printed=false;
+		int prev_month=-1;
+		std::cout << "    ";//po tych spacjach zaczyna pisać nazwy miesięcy
+		for(int w=0 ; w<WEEKS ; ++w) {
+			int days_back = kalendarz[y][w][0];
+			if(days_back != -1) {
+				boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
+				int new_month = then.date().month();
+				if((new_month != prev_month) and (not just_printed)) {
+					std::cout << then.date().month();
+					just_printed=true;
+					prev_month=new_month;
+				} else {
+					if(just_printed) {
+						std::cout << " ";
+						just_printed=false;
+					} else {
+						std::cout << "  ";
+					}
+				}
+			} else {
+				std::cout << "  ";
+			}
+		}
+		std::cout << "\n"; // napisał nazwy miesięcy
+
 		for(int d=0 ; d<7 ; ++d) {
 			std::cout << "    "<<weeknames[d]<<" ";
 			for(int w=0 ; w<WEEKS ; ++w) {
@@ -123,7 +153,8 @@ int main(int argc, char** argv)
 				if(days_back != -1) {
 					assert(days_back >=0 and days_back<days);
 					int val = count_per_day[days_back];
-					dot.print(val);
+					boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
+					dot.print(val,then,opt);
 				} else {
 					std::cout << "  ";
 				}
@@ -131,5 +162,7 @@ int main(int argc, char** argv)
 			std::cout << "\n";
 		}
 	}
-
+	std::cout << "\n                                                                                         Less ";
+	dot.put(0);dot.put(1);dot.put(2);dot.put(3);dot.put(4);
+	std::cout << " More\n";
 }
