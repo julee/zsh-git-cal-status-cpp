@@ -21,21 +21,28 @@ std::string exec(const std::string& cmd) {
     }
 }
 
-void printDot(int val,int max) {
-	static const std::vector<int> colors={ 237, 139, 40, 190, 1 };
-	static int q1  =   max/4;
-	static int q2  =   max/2;
-	static int q3  = 3*max/4;
-
-	std::cout << q1 << "," << q2 << "," << q3 << ", " << val << " " << max;
-
-	int index=   val == 0  ? 0
-                   : val <= q1 ? 1
-                   : val <= q2 ? 2
-                   : val <= q3 ? 3
-                               : 4;
-	std::cout << "\e[38;5;"<<(boost::lexical_cast<std::string>(colors[index]))<<"m◼ \e[0m";
-}
+struct Dot {
+	int q1{0},q2{0},q3{0};
+	static constexpr int colors[]={ 237, 139, 40, 190, 1 };
+	Dot(const std::vector<int>& cc) {
+		std::vector<int> vv{};
+		for(const auto& a:cc) { if(a!=0) vv.push_back(a); }
+		std::sort(vv.begin(),vv.end());
+		size_t s = vv.size();
+		q1=vv[s/4];
+		q2=vv[s/2];
+		q3=vv[3*s/4];
+		std::cerr << vv[0] << " " << q1 << " " << q2 << " " << q3 << "\n";
+	};
+	void print(int val) {
+		int index=   val == 0  ? 0
+			   : val <= q1 ? 1
+			   : val <= q2 ? 2
+			   : val <= q3 ? 3
+				       : 4;
+		std::cout << val << "\e[38;5;"<<(boost::lexical_cast<std::string>(colors[index]))<<"m◼ \e[0m";
+	}
+};
 
 int main(int argc, char** argv)
 {
@@ -49,7 +56,8 @@ int main(int argc, char** argv)
 	boost::posix_time::ptime date1970(boost::gregorian::date(1970,1,1));
 	auto        now        = boost::posix_time::second_clock::universal_time();
 	boost::posix_time::ptime now_date_UTC{now.date()};
-	auto        now_local  = boost::posix_time::second_clock::local_time();
+//	auto        now_local  = boost::posix_time::second_clock::local_time();
+//	auto        UTC_local  = now-now_local;
 	int         yy         = (now - date1970).hours()/24/365 - 5;
 	//std::cout << "years since 1975 = " << yy << "\n";
 
@@ -74,16 +82,15 @@ int main(int argc, char** argv)
 //	std::cout << git_cal_result << "\n" << "\n" << newlines << "\n";
 	for(auto& that_commit_UTC : commits) {
 //		std::cout << a << " " << a.date().year() << " " << a.date().month()  << " " << a.date().day() << "\n";
-		count_per_day[ ( now_date_UTC - that_commit_UTC ).hours()/24 ] += 1;
+		std::cout << that_commit_UTC << "\n";
+		count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.date()) /* + UTC_local */ ).hours()/24 ] += 1;
 	}
 
 
 	// no to mam teraz licznik ile było każdego dnia, oraz max.
-	int max = *std::max_element(count_per_day.begin() , count_per_day.end());
-	std::cout << max << "\n";
-
+	Dot dot(count_per_day);
 	for(auto& a : count_per_day) {
-		printDot(a,max);
+		dot.print(a);
 		std::cout << "\n";
 	}
 }
