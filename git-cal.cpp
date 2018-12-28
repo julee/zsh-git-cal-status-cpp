@@ -1,5 +1,6 @@
 #include "OptionsCal.hpp"
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include "boost/date_time/c_local_time_adjustor.hpp"
 #include <algorithm>
 #include <sstream>
 #include <codecvt>
@@ -165,7 +166,7 @@ struct Dot {
 		q1=vv[s/4];
 		q2=vv[s/2];
 		q3=vv[3*s/4];
-//		std::cerr << vv[0] << " " << q1 << " " << q2 << " " << q3 << "\n";
+		std::cerr << vv[0] << " " << q1 << " " << q2 << " " << q3 << "\n";
 	};
 	void print(int val , const boost::posix_time::ptime& then, const OptionsCal& opt) {
 		int index=   val == 0  ? 0
@@ -226,7 +227,6 @@ int main(int argc, char** argv)
 	auto        now            = boost::posix_time::second_clock::universal_time();
 	auto        now_local      = boost::posix_time::second_clock::local_time();
 	auto        now_local_date = now_local.date();
-	auto        diff_UTC_local = now - now_local;
 	boost::posix_time::ptime now_date_UTC{now.date()};
 	boost::posix_time::ptime now_date_LOC{now_local_date};
 	int         years_max      = (now - date1970).hours()/24/365.25 - 5;
@@ -279,7 +279,7 @@ int main(int argc, char** argv)
 //std::cerr << that_commit_UTC.time << " " << ( that_commit_UTC.time - diff_UTC_local ) << "\n";
 //		int idx = ( now_date_UTC - boost::posix_time::ptime( that_commit_UTC.time                   .date()) ).hours()/24;
 		// I need difference between dates with truncated hours, so that one second after midnight becomes full 24 hours.
-		int idx = ( now_date_LOC - boost::posix_time::ptime((that_commit_UTC.time - diff_UTC_local ).date()) ).hours()/24;
+		int idx = ( now_date_LOC - boost::posix_time::ptime((boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(that_commit_UTC.time)).date()) ).hours()/24;
 		count_per_day[ idx ].count += 1;
 		count_per_day[ idx ].authors[that_commit_UTC.author].count += 1;
 	}
