@@ -20,6 +20,7 @@ struct OptionsCal
 	int		print_authors;
 	bool		include_emails;
 	bool		print_streaks;
+	bool		only_last_year;
 
 	OptionsCal(int argc, char** argv, unsigned columns, unsigned max_description_length)
 	// to make it work put in `int main(……)`:
@@ -33,6 +34,7 @@ struct OptionsCal
 		("git-dir"                , po::value<std::string>(&git_dir                )->default_value(""   ),"The --git-dir for git")
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
 		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"analyse commits of only one selected author, otherwise all authors are included")
+		("only-last-year,y"       , po::bool_switch       (&only_last_year         )->default_value(false),"print only single year of data, skip older data")
 		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"start week with sunday instead of monday")
 		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of months (as in real calendar)")
 		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"instead of ◼ put the commit count number")

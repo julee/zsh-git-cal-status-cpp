@@ -166,7 +166,7 @@ struct Dot {
 		q1=vv[s/4];
 		q2=vv[s/2];
 		q3=vv[3*s/4];
-		std::cerr << vv[0] << " " << q1 << " " << q2 << " " << q3 << "\n";
+//		std::cerr << vv[0] << " quartiles: " << q1 << " " << q2 << " " << q3 << "\n";
 	};
 	void print(int val , const boost::posix_time::ptime& then, const OptionsCal& opt) {
 		int index=   val == 0  ? 0
@@ -230,6 +230,8 @@ int main(int argc, char** argv)
 	boost::posix_time::ptime now_date_UTC{now.date()};
 	boost::posix_time::ptime now_date_LOC{now_local_date};
 	int         years_max      = (now - date1970).hours()/24/365.25 - 5;
+	// if only_last_year then reset years_max to 1.
+	if(opt.only_last_year) { years_max=1; }
 // Prepare --pretty=format for git invocation
 	std::string fmt="";
 	if(opt.print_authors != 0) {
