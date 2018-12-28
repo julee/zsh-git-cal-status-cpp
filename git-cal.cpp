@@ -229,11 +229,13 @@ int main(int argc, char** argv)
 			}
 			std::cout << "\n";
 		}
-		for(const auto& aa : authors_count) {
-			std::string spaces{};
-			int len=20-aa.first.size();
-			while(--len>0) spaces+=" ";
-			std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second << "\n";
+		if(opt.print_authors) {
+			for(const auto& aa : authors_count) {
+				std::string spaces{};
+				int len=20-aa.first.size();
+				while(--len>0) spaces+=" ";
+				std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second << "\n";
+			}
 		}
 	}
 	std::cout << "\n                                                                                         Less ";
