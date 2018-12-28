@@ -1,6 +1,7 @@
 #include "OptionsCal.hpp"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <algorithm>
+#include <sstream>
 
 // FIXME - duplikat z moj-git-status.cpp, bom leniwy
 std::string exec(const std::string& cmd) {
@@ -23,6 +24,7 @@ std::string exec(const std::string& cmd) {
 
 struct Dot {
 	int q1{0},q2{0},q3{0};
+	const std::string esc{char{27}}; // zamiast "\e" który generuje warningi.
 	const std::vector<int> colors={ 237, 139, 40, 190, 1 };
 	Dot(const std::vector<int>& cc) {
 		std::vector<int> vv{};
@@ -41,11 +43,24 @@ struct Dot {
 			   : val <= q2 ? 2
 			   : val <= q3 ? 3
 				       : 4;
-		put(index);
+		if(opt.number_days) {
+			int d = then.date().day();
+			std::string s="";
+			if(d<10) s=" ";
+			std::cout << colStart(index)<< s << d <<colEnd();
+		} else {
+			put(index);
+		}
 	};
 	void put(int index) {
-		std::cout <</* val <<*/ "\e[38;5;"<<(boost::lexical_cast<std::string>(colors[index]))<<"m◼ \e[0m";
+		std::cout << colStart(index)<<"◼ "<<colEnd();
 	};
+	std::string colStart(int index) {
+		return esc+"[38;5;"+(boost::lexical_cast<std::string>(colors[index]))+"m";
+	}
+	std::string colEnd() {
+		return esc+"[0m";
+	}
 };
 
 int main(int argc, char** argv)
@@ -64,14 +79,19 @@ int main(int argc, char** argv)
 	boost::posix_time::ptime now_date_LOC{now_local_date};
 	int         yy             = (now - date1970).hours()/24/365 - 5;
 
-	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\""+author);
+	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at %aN\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\""+author);
 
 	size_t newlines = std::count(git_cal_result.begin(), git_cal_result.end(), '\n');
 	std::vector<boost::posix_time::ptime> commits;
 	commits.reserve(newlines+10);
 	std::string tmp;
 	std::stringstream ss(git_cal_result);
-	while(std::getline(ss,tmp,'\n')) { commits.push_back( boost::posix_time::from_time_t( boost::lexical_cast<time_t>( tmp ) ) ); }
+	while(std::getline(ss,tmp,'\n')) {
+		std::stringstream tt(tmp);
+		time_t time{0};
+		tt >> time;
+		commits.push_back( boost::posix_time::from_time_t( boost::lexical_cast<time_t>( time ) ) );
+	}
 
 	std::sort(commits.rbegin(),commits.rend()); // w sumie to już jest posortowane, to tak tylko dla pewności
 	auto start = *commits.rbegin();
@@ -99,7 +119,7 @@ int main(int argc, char** argv)
 */
 	// ↓ year      ↓ week       ↓ day   days_back
 	std::vector<std::vector<std::vector<int>>> kalendarz(years,std::vector<std::vector<int>>(WEEKS,std::vector<int>(7,-1)));
-	int current_year = now_local_date.year();
+//	int current_year = now_local_date.year();
 	int current_week = WEEKS-1;
 	int years_back   = 0;
 	for(size_t i = 0 ; i<count_per_day.size() ; ++i) {
@@ -118,33 +138,46 @@ int main(int argc, char** argv)
 		}
 	}
 
+	ss.str("");
 	for(int y = years-1 ; y>=0 ; --y) {
-		std::cout <<         "                                                        "<<current_year-y<<"\n";
+		//std::cout <<         "                                                        "<<current_year-y<<"\n";
 		bool just_printed=false;
+		bool got_year=false;
 		int prev_month=-1;
-		std::cout << "    ";//po tych spacjach zaczyna pisać nazwy miesięcy
+		std::string months_str("      ");//po tych spacjach zaczyna pisać nazwy miesięcy
+		std::string year_str(months_str);
 		for(int w=0 ; w<WEEKS ; ++w) {
 			int days_back = kalendarz[y][w][0];
 			if(days_back != -1) {
 				boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
 				int new_month = then.date().month();
+				if( (not got_year) and year_str.size() >= 56 ) {
+					year_str.resize(56);
+					year_str += boost::lexical_cast<std::string>(then.date().year());
+					got_year=true;
+				}
 				if((new_month != prev_month) and (not just_printed)) {
-					std::cout << then.date().month();
+					ss << then.date().month();
+					months_str += ss.str(); ss.str("");
+					if(not got_year) year_str   += "   ";
 					just_printed=true;
 					prev_month=new_month;
 				} else {
 					if(just_printed) {
-						std::cout << " ";
+						months_str += " ";
+						if(not got_year) year_str   += " ";
 						just_printed=false;
 					} else {
-						std::cout << "  ";
+						months_str += "  ";
+						if(not got_year) year_str   += "  ";
 					}
 				}
 			} else {
-				std::cout << "  ";
+				months_str += "  ";
+				if(not got_year) year_str   += "  ";
 			}
 		}
-		std::cout << "\n"; // napisał nazwy miesięcy
+		std::cout << year_str << "\n" << months_str << "\n";
 
 		for(int d=0 ; d<7 ; ++d) {
 			std::cout << "    "<<weeknames[d]<<" ";
@@ -165,4 +198,5 @@ int main(int argc, char** argv)
 	std::cout << "\n                                                                                         Less ";
 	dot.put(0);dot.put(1);dot.put(2);dot.put(3);dot.put(4);
 	std::cout << " More\n";
+	std::cout << std::setw(4) << commits.size() << ": Total commits\n";
 }
