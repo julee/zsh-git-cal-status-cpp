@@ -47,8 +47,10 @@ int main(int argc, char** argv)
 	std::string call  = "/usr/bin/git "+gdir+wtree+author;
 
 	boost::posix_time::ptime date1970(boost::gregorian::date(1970,1,1));
-	auto        now  = boost::posix_time::second_clock::universal_time();
-	int         yy   = (now - date1970).hours()/24/365 - 5;
+	auto        now        = boost::posix_time::second_clock::universal_time();
+	boost::posix_time::ptime now_date_UTC{now.date()};
+	auto        now_local  = boost::posix_time::second_clock::local_time();
+	int         yy         = (now - date1970).hours()/24/365 - 5;
 	//std::cout << "years since 1975 = " << yy << "\n";
 
 	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\"");
@@ -70,9 +72,9 @@ int main(int argc, char** argv)
 	std::vector<int> count_per_day(days , 0);
 
 //	std::cout << git_cal_result << "\n" << "\n" << newlines << "\n";
-	for(auto& a: commits) {
+	for(auto& that_commit_UTC : commits) {
 //		std::cout << a << " " << a.date().year() << " " << a.date().month()  << " " << a.date().day() << "\n";
-		count_per_day[ (now - a).hours()/24 ] += 1; // FIXME
+		count_per_day[ ( now_date_UTC - that_commit_UTC ).hours()/24 ] += 1;
 	}
 
 
