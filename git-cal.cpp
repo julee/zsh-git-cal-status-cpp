@@ -5,6 +5,7 @@
 #include <codecvt>
 #include <boost/optional.hpp>
 //#include <boost/optional/optional_io.hpp>
+#include <sys/ioctl.h>
 
 // FIXME - duplikat z moj-git-status.cpp, bom leniwy
 std::string exec(const std::string& cmd) {
@@ -43,23 +44,57 @@ struct DayInfo {
 	AuthorsCount authors;
 };
 
-std::pair<boost::posix_time::time_period ,boost::optional<boost::posix_time::time_period> > calcStreak(const std::set<int>& streaks) {
+std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > calcStreak(const std::set<int>& streaks) {
+	if(streaks.empty()) return {boost::none,boost::none};
+
 	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
 	boost::posix_time::ptime now_date_LOC{now_local_date};
-	int cur_start{-1},cur_end{-1},lon_start{-1},lon_end{-1},tmp_start{-1},tmp_end{-1};
-	for(const auto& i : streaks) {
+	int cur_start{-1},cur_end{-1},lon_start{-1},lon_end{-1};//,tmp_start{-1},tmp_end{-1};
+
+/*
+	std::vector<int> streaks_sorted{};
+	for(const auto& i : streaks) { streaks_sorted.push_back(i); }
+	std::sort(streaks_sorted.begin(),streaks_sorted.end());
+*/
+
+//std::cerr << "LAST: "<< *streaks.rbegin() << "\n";
+	std::vector<int> cal( *streaks.rbegin()+1 , 0);
+	for(const auto& i : streaks) { cal[i] = 1; }
+	for(size_t i=1 ; i<cal.size() ; ++i) { if((cal[i] != 0) and (cal[i-1] != 0)) cal[i] = cal[i-1]+1; }
+	if(cal[0] != 0) {
+		cur_end = 0;
+		for(size_t i=1 ; i<cal.size() ; ++i) {
+			if(cal[i] == 0) {
+				cur_start = i-1;
+				break;
+			}
+		}
+	}
+	int max = *std::max_element( cal.begin() , cal.end() );
+	if(max >= 1) {
+		for(size_t i=1 ; i<cal.size() ; ++i) {
+			if(cal[i] == max) {
+				lon_start = i;
+				lon_end   = i-max+1;
+			}
+		}
+	}
+
+
+/*
+	for(const auto& i : streaks_sorted) {
 		if(tmp_start == -1) {
-			tmp_start = i;
 			tmp_end   = i;
+			tmp_start = i;
 		} else {
-			if( i - tmp_end == 1) {
-				tmp_end = i;
+			if( std::abs(i - tmp_start) == 1) {
+				tmp_start = i;
 			} else {
-				if(tmp_start == 0) {
+				if(tmp_end   == 0) {
 					cur_start = tmp_start;
 					cur_end   = tmp_end;
 				}
-				if( (tmp_end - tmp_start) > (lon_end - lon_start) ) {
+				if( std::abs(tmp_start - tmp_end) >= std::abs(lon_start - lon_end) ) {
 					lon_start = tmp_start;
 					lon_end   = tmp_end;
 				}
@@ -69,17 +104,20 @@ std::pair<boost::posix_time::time_period ,boost::optional<boost::posix_time::tim
 		}
 	}
 	// aj, odwrotnie mam start↔end , bo numerki w std::set<int> lecą wstecz
-	std::swap(lon_end,lon_start);
-	std::swap(cur_end,cur_start);
+	//std::swap(lon_end,lon_start);
+	//std::swap(cur_end,cur_start);
+*/
+
 	boost::posix_time::ptime then1 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(lon_start  )));
 	boost::posix_time::ptime then2 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(lon_end  -1)));
 	boost::posix_time::ptime then3 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(cur_start  )));
 	boost::posix_time::ptime then4 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(cur_end  -1)));
+	boost::optional<boost::posix_time::time_period> ret1=boost::none; ret1={then1 , then2};
 	boost::optional<boost::posix_time::time_period> ret2=boost::none;
-	if(cur_start != -1) {
+	if(cur_end   != -1) {
 		ret2 = { then3 , then4 };
 	}
-	return { { then1 , then2 } , ret2 };
+	return { ret1 , ret2 };
 }
 
 struct Dot {
@@ -130,7 +168,8 @@ struct Dot {
 
 int main(int argc, char** argv)
 {
-	OptionsCal opt(argc,argv);
+	struct winsize ww; ioctl(0, TIOCGWINSZ, &ww);
+	OptionsCal opt(argc,argv,ww.ws_col,15);
 //opt.print();
 	std::string gdir  = ""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
 	std::string wtree = ""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
@@ -302,11 +341,14 @@ int main(int argc, char** argv)
 				} else {
 					std::cout << std::setw(4) << aa.second.count;
 				}
-				std::pair<boost::posix_time::time_period ,boost::optional<boost::posix_time::time_period> > stt = calcStreak(aa.second.streaks);
-				std::cout << " Total commits. Logest streak "<< std::ceil(double(stt.first.length().hours())/24.0)
-				<< " days (" << stt.first.begin().date() << " " << stt.first.last().date() << ").";
-				if(stt.second) {
-					std::cout << " Current streak: " << std::ceil(double(stt.second.get().length().hours())/24.0) <<" days";
+				std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > stt = calcStreak(aa.second.streaks);
+				std::cout << " Total commits.";
+				if(stt.first) {
+					std::cout << " Logest streak "<< std::ceil(double(stt.first.get().length().hours())/24.0)
+					<< " days (" << stt.first.get().begin().date() << " " << stt.first.get().last().date() << ").";
+					if(stt.second) {
+						std::cout << " Current streak: " << std::ceil(double(stt.second.get().length().hours())/24.0) <<" days";
+					}
 				}
 				std::cout << "\n";
 				if(++printed >= opt.print_authors) break;

@@ -21,12 +21,12 @@ struct OptionsCal
 	bool		include_emails;
 	bool		print_streaks;
 
-	OptionsCal(int argc, char** argv/*, unsigned columns, unsigned max_description_length*/)
+	OptionsCal(int argc, char** argv, unsigned columns, unsigned max_description_length)
 	// to make it work put in `int main(……)`:
 	// #include <sys/ioctl.h>
 	// struct winsize w; ioctl(0, TIOCGWINSZ, &w); OptionsCal opt(argc,argv,w.ws_col,15);
-		//: options(columns		// width of the terminal
-		//, max_description_length)	// if option description eg. `--diff_max arg (=0.34999999999999998)` is longer than this, then explanation starts at next line
+		: options(columns		// width of the terminal
+		, max_description_length)	// if option description eg. `--diff_max arg (=0.34999999999999998)` is longer than this, then explanation starts at next line
 	{
 		options.add_options()
 		("help,h"                 , "display this help.")
