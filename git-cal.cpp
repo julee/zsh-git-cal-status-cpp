@@ -22,13 +22,23 @@ std::string exec(const std::string& cmd) {
     }
 }
 
+struct CommitInfo {
+	boost::posix_time::ptime time;
+	std::string author;
+};
+
+struct DayInfo {
+	int count;
+	std::map<std::string,int> authors;
+};
+
 struct Dot {
 	int q1{0},q2{0},q3{0};
 	const std::string esc{char{27}}; // zamiast "\e" który generuje warningi.
 	const std::vector<int> colors={ 237, 139, 40, 190, 1 };
-	Dot(const std::vector<int>& cc) {
+	Dot(const std::vector<DayInfo>& cc) {
 		std::vector<int> vv{};
-		for(const auto& a:cc) { if(a!=0) vv.push_back(a); }
+		for(const auto& a:cc) { if(a.count != 0) vv.push_back(a.count); }
 		std::sort(vv.begin(),vv.end());
 		size_t s = vv.size();
 //	std::cout << s << " ← size\n";
@@ -66,11 +76,6 @@ struct Dot {
 	std::string colEnd() {
 		return esc+"[0m";
 	}
-};
-
-struct CommitInfo {
-	boost::posix_time::ptime time;
-	std::string author;
 };
 
 int main(int argc, char** argv)
@@ -123,10 +128,10 @@ int main(int argc, char** argv)
 		weeknames="M W F S";
 	}
 	days=years*WEEKS*7 - (6-day_of_week);
-	std::vector<int> count_per_day(days , 0);
+	std::vector<DayInfo> count_per_day(days , {0,{}} );
 
 	for(auto& that_commit_UTC : commits) {
-		count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24 ] += 1;
+		count_per_day[ ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24 ].count += 1;
 	}
 
 	// no to mam teraz licznik ile było każdego dnia. Zaokrąglony do wielokrotności 52-tygodni w górę
@@ -204,7 +209,7 @@ int main(int argc, char** argv)
 				int days_back = kalendarz[y][w][d];
 				if(days_back != -1) {
 					assert(days_back >=0 and days_back<days);
-					int val = count_per_day[days_back];
+					int val = count_per_day[days_back].count;
 					boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
 					dot.print(val,then,opt);
 				} else {
