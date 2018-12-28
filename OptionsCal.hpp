@@ -17,7 +17,9 @@ struct OptionsCal
 	bool		start_with_sunday;
 	bool		number_days;
 	bool		number_commits;
-	bool		print_authors;
+	int		print_authors;
+	bool		include_emails;
+	bool		print_streaks;
 
 	OptionsCal(int argc, char** argv/*, unsigned columns, unsigned max_description_length*/)
 	// to make it work put in `int main(……)`:
@@ -30,11 +32,13 @@ struct OptionsCal
 		("help,h"                 , "display this help.")
 		("git-dir"                , po::value<std::string>(&git_dir                )->default_value(""   ),"The --git-dir for git")
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
-		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"git-cal: author")
-		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"git-cal: the calendar will start week with sunday instead of monday")
-		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"git-cal: the calendar will put the day's numbers")
-		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"git-cal: the calendar will put the commit count")
-		("print-authors,A"        , po::bool_switch       (&print_authors          )->default_value(false),"git-cal: the calendar will print the commit count per author")
+		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"select only one author")
+		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"start week with sunday instead of monday")
+		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"put the day's numbers")
+		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"put the commit count")
+		("print-authors,A"        , po::value<int>        (&print_authors          )->default_value(0    ),"print the commit count per author for top N authors")
+		("include-emails,e"       , po::bool_switch       (&include_emails         )->default_value(false),"also print the author's email")
+		("print-streaks,S"        , po::bool_switch       (&print_streaks          )->default_value(false),"print author streaks")
 		;
 
 		po::variables_map vm;

@@ -28,7 +28,13 @@ struct CommitInfo {
 	std::wstring author;
 };
 
-typedef std::map<std::wstring,int> AuthorsCount;
+struct AuthorStreak {
+	int count{0};
+	boost::gregorian::date start{boost::gregorian::date(1970,1,1)};
+	boost::gregorian::date end  {boost::gregorian::date(1970,1,1)};
+};
+
+typedef std::map<std::wstring,AuthorStreak> AuthorsCount;
 
 struct DayInfo {
 	int count;
@@ -101,8 +107,16 @@ int main(int argc, char** argv)
 	boost::posix_time::ptime now_date_LOC{now_local_date};
 	int         yy             = (now - date1970).hours()/24/365 - 5;
 
-	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at %aN\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\""+author);
+	std::string fmt="";
+	if(opt.print_authors != 0) {
+		fmt = " %aN";
+		if(opt.include_emails) {
+			fmt = " %aE, %aN";
+		}
+	}
+	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at"+fmt+"\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\""+author);
 
+	size_t longest_author{0};
 	size_t newlines = std::count(git_cal_result.begin(), git_cal_result.end(), '\n');
 	std::vector<CommitInfo> commits;
 	commits.reserve(newlines+10);
@@ -115,7 +129,7 @@ int main(int argc, char** argv)
 		tt >> time;
 		std::string aut{};
 		std::getline(tt,aut,'\n');
-//std::cerr << aut << "\n";
+		longest_author = std::max( aut.size() , longest_author );
 		commits.push_back( { boost::posix_time::from_time_t( boost::lexical_cast<time_t>( time ) ) , converter.from_bytes(aut) } );
 	}
 
@@ -137,7 +151,7 @@ int main(int argc, char** argv)
 	for(auto& that_commit_UTC : commits) {
 		int idx = ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24;
 		count_per_day[ idx ].count += 1;
-		count_per_day[ idx ].authors[that_commit_UTC.author] += 1;
+		count_per_day[ idx ].authors[that_commit_UTC.author].count += 1;
 //std::cerr << that_commit_UTC.author << " " << count_per_day[ idx ].authors[that_commit_UTC.author] << "\n";
 	}
 
@@ -219,7 +233,7 @@ int main(int argc, char** argv)
 					assert(days_back >=0 and days_back<days);
 					int val = count_per_day[days_back].count;
 					for(const auto& aa : count_per_day[days_back].authors) {
-						authors_count[aa.first]+=aa.second;
+						authors_count[aa.first].count += aa.second.count;
 					}
 					boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
 					dot.print(val,then,opt);
@@ -229,12 +243,20 @@ int main(int argc, char** argv)
 			}
 			std::cout << "\n";
 		}
-		if(opt.print_authors) {
+		if(opt.print_authors != 0 or opt.print_streaks)
+		{
+			std::vector<std::pair<std::wstring,AuthorStreak> > authors_count_sorted{};
 			for(const auto& aa : authors_count) {
+				authors_count_sorted.push_back({aa.first,aa.second});
+			}
+			std::sort(authors_count_sorted.begin(), authors_count_sorted.end() , [](const std::pair<std::wstring,AuthorStreak>& a, const std::pair<std::wstring,AuthorStreak>& b)->bool { return a.second.count > b.second.count; });
+			int printed=0;
+			for(const auto& aa : authors_count_sorted) {
 				std::string spaces{};
-				int len=20-aa.first.size();
+				int len=longest_author+1 - aa.first.size();
 				while(--len>0) spaces+=" ";
-				std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second << "\n";
+				std::cout << spaces << converter.to_bytes(aa.first) << " : " << aa.second.count << "\n";
+				if(++printed >= opt.print_authors) break;
 			}
 		}
 	}
