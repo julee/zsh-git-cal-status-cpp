@@ -32,13 +32,13 @@ struct OptionsCal
 		("help,h"                 , "display this help.")
 		("git-dir"                , po::value<std::string>(&git_dir                )->default_value(""   ),"The --git-dir for git")
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
-		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"select only one author")
+		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"analyse commits of only one selected author, otherwise all authors are included")
 		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"start week with sunday instead of monday")
-		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"put the day's numbers")
-		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"put the commit count")
-		("print-authors,A"        , po::value<int>        (&print_authors          )->default_value(0    ),"print the commit count per author for top N authors")
+		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of months (as in real calendar)")
+		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"instead of ◼ put the commit count number")
+		("print-authors,N"        , po::value<int>        (&print_authors          )->default_value(0    ),"print the commit count and streaks per author for top N authors")
+		("print-streaks,S"        , po::bool_switch       (&print_streaks          )->default_value(false),"print the commit count and streaks for all authors merged together (or single author if -a is specified)")
 		("include-emails,e"       , po::bool_switch       (&include_emails         )->default_value(false),"also print the author's email")
-		("print-streaks,S"        , po::bool_switch       (&print_streaks          )->default_value(false),"print author streaks")
 		;
 
 		po::variables_map vm;

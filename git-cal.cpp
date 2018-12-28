@@ -120,6 +120,19 @@ std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost
 	return { ret1 , ret2 };
 }
 
+void printStreaks(const std::set<int>& streaks) {
+	std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > stt = calcStreak(streaks);
+	if(stt.first) {
+		std::cout << " Longest streak "<< std::ceil(double(stt.first.get().length().hours())/24.0)
+		<< " days (" << stt.first.get().begin().date() << " " << stt.first.get().last().date() << ").";
+		if(stt.second) {
+			std::cout << " Current streak: " << std::ceil(double(stt.second.get().length().hours())/24.0) <<" days";
+		}
+	}
+	std::cout << "\n";
+}
+
+
 struct Dot {
 	int q1{0},q2{0},q3{0};
 	const std::string esc{char{27}}; // zamiast "\e" który generuje warningi.
@@ -176,7 +189,11 @@ int main(int argc, char** argv)
 	std::string author= ""; if(opt.author    != "") author= " --author='"   +opt.author+"'";
 	std::string call  = "/usr/bin/git "+gdir+wtree;
 	if(opt.number_commits and opt.number_days) {
-		std::cerr << "--number-days,-n  and  --number-commits,-c  are mutually exclusive.\n";
+		std::cerr << "Bad invocation: `--number-days,-n`  and  `--number-commits,-c`  are mutually exclusive.\n";
+		exit(1);
+	}
+	if(opt.include_emails and (opt.print_authors == 0)) {
+		std::cerr << "Bad invocation: `--include-emails,-e` cannot work when `--print-authors,-N` == 0.\n";
 		exit(1);
 	}
 
@@ -264,6 +281,7 @@ int main(int argc, char** argv)
 	}
 
 	ss.str("");
+	std::set<int> total_streaks{};
 	for(int y = years-1 ; y>=0 ; --y) {
 		//std::cout <<         "                                                        "<<current_year-y<<"\n";
 		bool just_printed=false;
@@ -315,6 +333,7 @@ int main(int argc, char** argv)
 					for(const auto& aa : count_per_day[days_back].authors) {
 						authors_count[aa.first].count += aa.second.count;
 						authors_count[aa.first].streaks.insert(days_back);
+						total_streaks.insert(days_back);
 					}
 					boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
 					dot.print(val,then,opt);
@@ -337,20 +356,12 @@ int main(int argc, char** argv)
 				int len=longest_author+1 - aa.first.size();
 				while(--len>0) spaces+=" ";
 				if(longest_author>3) {
-					std::cout << spaces << converter.to_bytes(aa.first) << " : " << std::setw(4) << aa.second.count;
+					std::cout << spaces << converter.to_bytes(aa.first) << " : " << std::setw(4) << aa.second.count << " ";
 				} else {
-					std::cout << std::setw(4) << aa.second.count;
+					std::cout << std::setw(4) << aa.second.count << " ";
 				}
-				std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > stt = calcStreak(aa.second.streaks);
-				std::cout << " Total commits.";
-				if(stt.first) {
-					std::cout << " Longest streak "<< std::ceil(double(stt.first.get().length().hours())/24.0)
-					<< " days (" << stt.first.get().begin().date() << " " << stt.first.get().last().date() << ").";
-					if(stt.second) {
-						std::cout << " Current streak: " << std::ceil(double(stt.second.get().length().hours())/24.0) <<" days";
-					}
-				}
-				std::cout << "\n";
+				std::cout << "total commits.";
+				printStreaks(aa.second.streaks);
 				if(++printed >= opt.print_authors) break;
 			}
 		}
@@ -358,5 +369,7 @@ int main(int argc, char** argv)
 	std::cout << "\n                                                                                         Less ";
 	dot.put(0);dot.put(1);dot.put(2);dot.put(3);dot.put(4);
 	std::cout << " More\n";
-	std::cout << std::setw(4) << commits.size() << ": Total commits\n";
+	std::cout << std::setw(4) << commits.size() << " total commits since "<< start.date() <<".";
+	printStreaks(total_streaks);
+	std::cout << "\n";
 }
