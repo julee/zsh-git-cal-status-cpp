@@ -7,7 +7,7 @@
 //#include <boost/optional/optional_io.hpp>
 #include <sys/ioctl.h>
 
-// FIXME - duplikat z moj-git-status.cpp, bom leniwy
+// FIXME - duplicate from file moj-git-status.cpp, because I am lazy
 std::string exec(const std::string& cmd) {
     std::array<char, 128> buffer;
     std::string result;
@@ -47,7 +47,7 @@ struct DayInfo {
 std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > calcStreak(const std::set<int>& streaks) {
 	if(streaks.empty()) return {boost::none,boost::none};
 
-// FIXME - duplikat z main
+// FIXME - duplicate from int main(), because I am lazy
 	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
 	boost::posix_time::ptime now_date_LOC{now_local_date};
 // FIXME - end
@@ -76,8 +76,7 @@ std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost
 		}
 	}
 
-
-/* inna metoda, ale ma błąd, źle commity Bruno z 2014 roku.
+/* some other method but it has some error inside, for example yade Bruno commmits from year 2014.
 	for(const auto& i : streaks_sorted) {
 		if(tmp_start == -1) {
 			tmp_end   = i;
@@ -129,7 +128,7 @@ void printStreaks(const std::set<int>& streaks) {
 }
 
 void printAuthorSummary(const AuthorsCount& authors_count, size_t longest_author, const OptionsCal& opt) {
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter; // FIXME - duplikat z int main()
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter; // FIXME - duplicate from int main(), because I am lazy
 	std::vector<std::pair<std::wstring,AuthorStreak> > authors_count_sorted{};
 	for(const auto& aa : authors_count) {
 		authors_count_sorted.push_back({aa.first,aa.second});
@@ -154,7 +153,7 @@ void printAuthorSummary(const AuthorsCount& authors_count, size_t longest_author
 
 struct Dot {
 	int q1{0},q2{0},q3{0};
-	const std::string esc{char{27}}; // zamiast "\e" który generuje warningi.
+	const std::string esc{char{27}}; // I would just use std::cout << "\e", but it is generating compiler warnings, so lets define the string with ESC inside.
 	const std::vector<int> colors={ 237, 139, 40, 190, 1 };
 	Dot(const std::vector<DayInfo>& cc) {
 		std::vector<int> vv{};
@@ -280,7 +279,6 @@ int main(int argc, char** argv)
 */
 	// ↓ year      ↓ week       ↓ day   days_back
 	std::vector<std::vector<std::vector<int>>> kalendarz(years,std::vector<std::vector<int>>(WEEKS,std::vector<int>(7,-1)));
-//	int current_year = now_local_date.year();
 	int current_week = WEEKS-1;
 	int years_back   = 0;
 	for(size_t i = 0 ; i<count_per_day.size() ; ++i) {
@@ -303,12 +301,11 @@ int main(int argc, char** argv)
 	std::set<int> total_streaks{};
 	AuthorsCount total_authors_count{};
 	for(int y = years-1 ; y>=0 ; --y) {
-		//std::cout <<         "                                                        "<<current_year-y<<"\n";
 		bool just_printed=false;
 		bool got_year=false;
 		int prev_month=-1;
 		AuthorsCount authors_count;
-		std::string months_str("      ");//po tych spacjach zaczyna pisać nazwy miesięcy
+		std::string months_str("      ");// will write the Month names after these spaces
 		std::string year_str(months_str);
 		for(int w=0 ; w<WEEKS ; ++w) {
 			int days_back = kalendarz[y][w][0];
