@@ -199,13 +199,11 @@ struct Dot {
 
 int main(int argc, char** argv)
 {
+// FIXME - this int main() should be split into several functions inside a class, so that some variables are not duplicated: now_local_date, now_date_LOC, converter
+
+// Parse command line options
 	struct winsize ww; ioctl(0, TIOCGWINSZ, &ww);
 	OptionsCal opt(argc,argv,ww.ws_col,15);
-//opt.print();
-	std::string gdir  = ""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
-	std::string wtree = ""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
-	std::string author= ""; if(opt.author    != "") author= " --author='"   +opt.author+"'";
-	std::string call  = "/usr/bin/git "+gdir+wtree;
 	if(opt.number_commits and opt.number_days) {
 		std::cerr << "Bad invocation: `--number-days,-n`  and  `--number-commits,-c`  are mutually exclusive.\n";
 		exit(1);
@@ -214,14 +212,22 @@ int main(int argc, char** argv)
 		std::cerr << "Bad invocation: `--include-emails,-e` cannot work when `--print-authors,-N` == 0.\n";
 		exit(1);
 	}
+// This line will print the options after parsing.
+//	opt.print();
+// Prepare for git invocation
+	std::string gdir  = ""; if(opt.git_dir   != "") gdir  = " --git-dir "  +opt.git_dir;
+	std::string wtree = ""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
+	std::string author= ""; if(opt.author    != "") author= " --author='"   +opt.author+"'";
+	std::string call  = "/usr/bin/git "+gdir+wtree;
 
+// Calculate how many years passed since year 1975, also record present time `now` in UTC as well as in local clock. Will be used later too.
 	boost::posix_time::ptime date1970(boost::gregorian::date(1970,1,1));
 	auto        now            = boost::posix_time::second_clock::universal_time();
 	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
 	boost::posix_time::ptime now_date_UTC{now.date()};
 	boost::posix_time::ptime now_date_LOC{now_local_date};
-	int         yy             = (now - date1970).hours()/24/365 - 5;
-
+	int         years_max      = (now - date1970).hours()/24/365.25 - 5;
+// Prepare --pretty=format for git invocation
 	std::string fmt="";
 	if(opt.print_authors != 0) {
 		fmt = " %aN";
@@ -229,8 +235,10 @@ int main(int argc, char** argv)
 			fmt = " %aE, %aN";
 		}
 	}
-	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at"+fmt+"\" --since=\""+(boost::lexical_cast<std::string>(yy))+" years\""+author);
+// invoke git
+	std::string git_cal_result = exec(call+" log --no-merges --pretty=format:\"%at"+fmt+"\" --since=\""+(boost::lexical_cast<std::string>(years_max))+" years\""+author);
 
+// Parse git output and store it into commits
 	size_t longest_author{0};
 	size_t newlines = std::count(git_cal_result.begin(), git_cal_result.end(), '\n');
 	std::vector<CommitInfo> commits;
@@ -247,10 +255,10 @@ int main(int argc, char** argv)
 		longest_author = std::max( aut.size() , longest_author );
 		commits.push_back( { boost::posix_time::from_time_t( boost::lexical_cast<time_t>( time ) ) , converter.from_bytes(aut) } );
 	}
-
-	std::sort(commits.rbegin() , commits.rend() , [](const CommitInfo& a, const CommitInfo& b)->bool { return a.time < b.time; } ); // w sumie to już jest posortowane, to tak tylko dla pewności
+// Make sure it is sorted. Git produces reverse sorted output, so this isn't maybe strictly necessary, it's just to make sure.
+	std::sort(commits.rbegin() , commits.rend() , [](const CommitInfo& a, const CommitInfo& b)->bool { return a.time < b.time; } );
 	auto start = commits.rbegin()->time;
-
+// Round up the number of days to display on screen, so that it starts at a full year
 	int WEEKS = 52;
 	int days  = (now-start).hours()/24+1;
 	int years = std::ceil(double(days)/(WEEKS*7));//(365.25));
@@ -260,32 +268,33 @@ int main(int argc, char** argv)
 		day_of_week = (day_of_week+6)%7;
 		weeknames="M W F S";
 	}
+	// the final calculation. Without this line the calendar printed on screen whould abruptly end upon the first commit, instead at the year's end.
 	days=years*WEEKS*7 - (6-day_of_week);
+// Calculate how many commits were done per day, also track each author separetely
 	std::vector<DayInfo> count_per_day(days , {0,{}} );
-
 	for(auto& that_commit_UTC : commits) {
 		int idx = ( now_date_UTC - boost::posix_time::ptime(that_commit_UTC.time.date()) ).hours()/24;
 		count_per_day[ idx ].count += 1;
 		count_per_day[ idx ].authors[that_commit_UTC.author].count += 1;
-//std::cerr << that_commit_UTC.author << " " << count_per_day[ idx ].authors[that_commit_UTC.author] << "\n";
 	}
 
-	// no to mam teraz licznik ile było każdego dnia. Zaokrąglony do wielokrotności 52-tygodni w górę
+// The Dot class will print colored ◼ or commit counts or day of the month
 	Dot dot(count_per_day);
 /*
 	std::cout << "today is: " << now_local_date.day_of_week()  << "\n";
 	std::cout << "today is: " << now_local_date.month()  << "\n";
 	std::cout << "today is: " << now_local_date.year()  << "\n";
 */
+// Now fill the calendar matrix. Assume each year made of 52 weeks. The stored value is days_back since today. Also it refers to position in count_per_day[days_back]
 	// ↓ year      ↓ week       ↓ day   days_back
-	std::vector<std::vector<std::vector<int>>> kalendarz(years,std::vector<std::vector<int>>(WEEKS,std::vector<int>(7,-1)));
+	std::vector<std::vector<std::vector<int>>> calendar(years,std::vector<std::vector<int>>(WEEKS,std::vector<int>(7,-1))); // 3D matrix is constructed at the exactly needed size, filled with -1
 	int current_week = WEEKS-1;
 	int years_back   = 0;
 	for(size_t i = 0 ; i<count_per_day.size() ; ++i) {
 		assert(years_back   >=0 and years_back   < years);
 		assert(current_week >=0 and current_week < WEEKS);
 		assert(day_of_week  >=0 and day_of_week  < 7    );
-		kalendarz[years_back][current_week][day_of_week] = i;
+		calendar[years_back][current_week][day_of_week] = i;
 		--day_of_week;
 		if(day_of_week==-1) {
 			day_of_week = 6;
@@ -297,6 +306,7 @@ int main(int argc, char** argv)
 		}
 	}
 
+// Now print the calendar matrix on screen, calculate author contributions along the way for each year and sotre them in authors_count
 	ss.str("");
 	std::set<int> total_streaks{};
 	AuthorsCount total_authors_count{};
@@ -307,8 +317,9 @@ int main(int argc, char** argv)
 		AuthorsCount authors_count;
 		std::string months_str("      ");// will write the Month names after these spaces
 		std::string year_str(months_str);
+		// This loop is only to construct the YEAR and MONTH lines
 		for(int w=0 ; w<WEEKS ; ++w) {
-			int days_back = kalendarz[y][w][0];
+			int days_back = calendar[y][w][0];
 			if(days_back != -1) {
 				boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*days_back));
 				int new_month = then.date().month();
@@ -339,11 +350,11 @@ int main(int argc, char** argv)
 			}
 		}
 		std::cout << year_str << "\n" << months_str << "\n";
-
+		// This loop prints the actual colored ◼, and calculates commits
 		for(int d=0 ; d<7 ; ++d) {
 			std::cout << "    "<<weeknames[d]<<" ";
 			for(int w=0 ; w<WEEKS ; ++w) {
-				int days_back = kalendarz[y][w][d];
+				int days_back = calendar[y][w][d];
 				if(days_back != -1) {
 					assert(days_back >=0 and days_back<days);
 					int val = count_per_day[days_back].count;
