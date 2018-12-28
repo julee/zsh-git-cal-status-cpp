@@ -48,6 +48,11 @@ struct Dot {
 			std::string s="";
 			if(d<10) s=" ";
 			std::cout << colStart(index)<< s << d <<colEnd();
+		} else if(opt.number_commits) {
+			int d = val;
+			std::string s="";
+			if(d<10) s=" ";
+			std::cout << colStart(index)<< s << d <<colEnd();
 		} else {
 			put(index);
 		}
@@ -71,6 +76,10 @@ int main(int argc, char** argv)
 	std::string wtree = ""; if(opt.work_tree != "") wtree = " --work-tree "+opt.work_tree;
 	std::string author= ""; if(opt.author    != "") author= " --author='"   +opt.author+"'";
 	std::string call  = "/usr/bin/git "+gdir+wtree;
+	if(opt.number_commits and opt.number_days) {
+		std::cerr << "--number-days,-n  and  --number-commits,-c  are mutually exclusive.\n";
+		exit(1);
+	}
 
 	boost::posix_time::ptime date1970(boost::gregorian::date(1970,1,1));
 	auto        now            = boost::posix_time::second_clock::universal_time();

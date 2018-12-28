@@ -16,6 +16,7 @@ struct OptionsCal
 	std::string	author;
 	bool		start_with_sunday;
 	bool		number_days;
+	bool		number_commits;
 
 	OptionsCal(int argc, char** argv/*, unsigned columns, unsigned max_description_length*/)
 	// to make it work put in `int main(……)`:
@@ -31,6 +32,7 @@ struct OptionsCal
 		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"git-cal: author")
 		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"git-cal: the calendar will start week with sunday instead of monday")
 		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"git-cal: the calendar will put the day's numbers")
+		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"git-cal: the calendar will put the commit count")
 		;
 
 		po::variables_map vm;
