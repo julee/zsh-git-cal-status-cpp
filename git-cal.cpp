@@ -265,7 +265,7 @@ int main(int argc, char** argv)
 	auto        now_local_date = now_local.date();
 	boost::posix_time::ptime now_date_UTC{now.date()};
 	boost::posix_time::ptime now_date_LOC{now_local_date};
-	int         years_max      = (now - date1970).hours()/24/365.25 - 5;
+	int         years_max      = (now - date1970).hours()/24/365.25 - 5; // FIXME : better use now.date().year() - 1975; why did I write it this way earlier??
 	// if only_last_year then reset years_max to 1.
 	if(opt.only_last_year) { years_max=1; }
 // Prepare --pretty=format for git invocation
