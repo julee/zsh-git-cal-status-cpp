@@ -39,9 +39,10 @@ struct OptionsCal
 		("use-calendar-years,Y"   , po::bool_switch       (&use_calendar_years     )->default_value(false),"the calendar will be organized using `calandar years`, not `days back`")
 		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"start week with sunday instead of monday")
 		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of the month (as in real calendar)")
-//		("d"                      , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of months (as in real calendar)")
+//		(",d"                     , po::bool_switch       (&number_days            )->default_value(false),"same as --number-days, -n")
 		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"instead of ◼ put the commit count number")
 		("print-authors,N"        , po::value<int>        (&print_authors          )->default_value(0    ),"print the commit count and streaks per author for top N authors")
+//		(",A"                     , po::value<int>        (&print_authors          )->default_value(0    ),"same as --print-authors, -N")
 		("print-streaks,S"        , po::bool_switch       (&print_streaks          )->default_value(false),"print the commit count and streaks for all authors merged together (or single author if -a is specified)")
 		("include-emails,e"       , po::bool_switch       (&include_emails         )->default_value(false),"also print the author's email")
 		;
