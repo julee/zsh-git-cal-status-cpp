@@ -199,6 +199,42 @@ struct Dot {
 	}
 };
 
+void calcCurrentWeek(int& current_week,const boost::posix_time::ptime& now_date_LOC, const OptionsCal& opt) {
+	boost::posix_time::ptime year_start(boost::gregorian::date(now_date_LOC.date().year() , 1 , 1 ));
+	current_week = 0;// weeks start with 0
+	while(year_start < now_date_LOC) {
+		year_start += boost::posix_time::time_duration(boost::posix_time::hours(24));
+		if(     opt.start_with_sunday  and year_start.date().day_of_week() == 0) { ++current_week; };
+		if((not opt.start_with_sunday) and year_start.date().day_of_week() == 1) { ++current_week; };
+	}
+}
+
+void decrement(int& years_back, int& current_week, int& day_of_week, const OptionsCal& opt, int WEEKS, const boost::posix_time::ptime& now_date_LOC, int days_back) {
+	if(opt.use_calendar_years) {
+		boost::posix_time::ptime then = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24 * days_back));
+		//calcCurrentWeek(current_week , then , opt);
+		day_of_week = then.date().day_of_week();
+		if(not opt.start_with_sunday) { day_of_week = (day_of_week+6)%7;}
+		int new_years_back  = now_date_LOC.date().year() - then.date().year();
+		if(new_years_back != years_back) {
+			calcCurrentWeek(current_week , then , opt);
+			years_back = new_years_back;
+		} else {
+			if(day_of_week == 6) { --current_week; }
+		}
+	} else {
+		--day_of_week;
+		if(day_of_week==-1) {
+			day_of_week = 6;
+			current_week--;
+			if(current_week==-1) {
+				years_back++;
+				current_week=WEEKS-1;
+			}
+		}
+	}
+}
+
 int main(int argc, char** argv)
 {
 // FIXME - this int main() should be split into several functions inside a class, so that some variables are not duplicated: now_local_date, now_date_LOC, converter
@@ -264,17 +300,24 @@ int main(int argc, char** argv)
 	std::sort(commits.rbegin() , commits.rend() , [](const CommitInfo& a, const CommitInfo& b)->bool { return a.time < b.time; } );
 	auto start = commits.rbegin()->time;
 // Round up the number of days to display on screen, so that it starts at a full year
-	int WEEKS = 52;
+	int WEEKS = 52 + 2*int(opt.use_calendar_years); // when use_calendar_years max is 54 weeks
 	int days  = (now-start).hours()/24+1;
 	int years = std::ceil(double(days)/(WEEKS*7));//(365.25));
+	if(opt.use_calendar_years) {
+		years = now_local_date.year() - start.date().year() + 1;
+//		std::cerr << "years: " << years << "\n";
+	}
 	int day_of_week  = now_local_date.day_of_week();
 	std::string weeknames=" M W F ";
 	if(not opt.start_with_sunday) {
 		day_of_week = (day_of_week+6)%7;
 		weeknames="M W F S";
 	}
-	// the final calculation. Without this line the calendar printed on screen whould abruptly end upon the first commit, instead at the year's end.
+	// the final calculation. Without this line the calendar printed on screen whould abruptly end upon the first commit, instead at the year's start.
 	days=years*WEEKS*7 - (6-day_of_week);
+	if(opt.use_calendar_years) {
+		days = (now_date_LOC - boost::posix_time::ptime(boost::gregorian::date(start.date().year(),1,1))).hours()/24 + 1;
+	}
 // Calculate how many commits were done per day, also track each author separetely
 	std::vector<DayInfo> count_per_day(days , {0,{}} );
 	for(auto& that_commit_UTC : commits) {
@@ -297,21 +340,15 @@ int main(int argc, char** argv)
 	// ↓ year      ↓ week       ↓ day   days_back
 	std::vector<std::vector<std::vector<int>>> calendar(years,std::vector<std::vector<int>>(WEEKS,std::vector<int>(7,-1))); // 3D matrix is constructed at the exactly needed size, filled with -1
 	int current_week = WEEKS-1;
+	if(opt.use_calendar_years) { calcCurrentWeek(current_week,now_date_LOC,opt); }
 	int years_back   = 0;
 	for(size_t i = 0 ; i<count_per_day.size() ; ++i) {
+//std::cerr << "week: " << current_week << " years_back: " << years_back << "\n";
 		assert(years_back   >=0 and years_back   < years);
 		assert(current_week >=0 and current_week < WEEKS);
 		assert(day_of_week  >=0 and day_of_week  < 7    );
 		calendar[years_back][current_week][day_of_week] = i;
-		--day_of_week;
-		if(day_of_week==-1) {
-			day_of_week = 6;
-			current_week--;
-			if(current_week==-1) {
-				years_back++;
-				current_week=WEEKS-1;
-			}
-		}
+		decrement(years_back, current_week, day_of_week, opt, WEEKS, now_date_LOC , i+1);
 	}
 
 // Now print the calendar matrix on screen, calculate author contributions along the way for each year and sotre them in authors_count

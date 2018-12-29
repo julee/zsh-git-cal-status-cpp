@@ -21,6 +21,7 @@ struct OptionsCal
 	bool		include_emails;
 	bool		print_streaks;
 	bool		only_last_year;
+	bool		use_calendar_years;
 
 	OptionsCal(int argc, char** argv, unsigned columns, unsigned max_description_length)
 	// to make it work put in `int main(……)`:
@@ -35,8 +36,10 @@ struct OptionsCal
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
 		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"analyse commits of only one selected author, otherwise all authors are included")
 		("only-last-year,y"       , po::bool_switch       (&only_last_year         )->default_value(false),"print only single year of data, skip older data")
+		("use-calendar-years,Y"   , po::bool_switch       (&use_calendar_years     )->default_value(false),"the calendar will be organized using `calandar years`, not `days back`")
 		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"start week with sunday instead of monday")
-		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of months (as in real calendar)")
+		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of the month (as in real calendar)")
+//		("d"                      , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of months (as in real calendar)")
 		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"instead of ◼ put the commit count number")
 		("print-authors,N"        , po::value<int>        (&print_authors          )->default_value(0    ),"print the commit count and streaks per author for top N authors")
 		("print-streaks,S"        , po::bool_switch       (&print_streaks          )->default_value(false),"print the commit count and streaks for all authors merged together (or single author if -a is specified)")
