@@ -362,7 +362,7 @@ int main(int argc, char** argv)
 		decrement(years_back, current_week, day_of_week, opt, WEEKS, now_date_LOC , i+1);
 	}
 
-// Now print the calendar matrix on screen, calculate author contributions along the way for each year and sotre them in authors_count
+// Now print the calendar matrix on screen, calculate author contributions along the way for each year and sort them in authors_count
 	ss.str("");
 	std::set<int> total_streaks{};
 	AuthorsCount total_authors_count{};
@@ -381,6 +381,7 @@ int main(int argc, char** argv)
 				int new_month = then.date().month();
 				if( (not got_year) and year_str.size() >= 56 ) {
 					year_str.resize(56);
+					// puts a year number above the month which is in the middle
 					year_str += boost::lexical_cast<std::string>(then.date().year());
 					got_year=true;
 				}
@@ -404,6 +405,10 @@ int main(int argc, char** argv)
 				months_str += "  ";
 				if(not got_year) year_str   += "  ";
 			}
+		}
+		if(not got_year) {
+			year_str.resize(56,' ');
+			year_str += boost::lexical_cast<std::string>(now_date_LOC.date().year());
 		}
 		std::cout << year_str << "\n" << months_str << "\n";
 		// This loop prints the actual colored ◼, and calculates commits
