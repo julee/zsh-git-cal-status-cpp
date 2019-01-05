@@ -78,7 +78,7 @@ Symbol | Meaning
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr1.png)
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr2.png)
 
-* git-cal is a simple C++ code to view commits calendar (similar to github contributions calendar) on command line
+* git-cal is a simple C++ code to view commits calendar on command line
 * Each block in the graph corresponds to a day and is shaded with one
   of the 5 possible colors, each representing relative number of commits on that day.
 * Possible to see authors, count contributions in each year, show amount of commits per day.
