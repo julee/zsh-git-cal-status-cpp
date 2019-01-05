@@ -41,42 +41,21 @@ git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 
 #include "Options.hpp"
 
-// XXX: te includy może się jeszcze przydadzą. Póki co to się kompiluje bez tych zakomentowanych.
 #include <stdexcept>
 #include <sys/wait.h>
-//#include <sys/ioctl.h>
 #include <iostream>
 #include <fstream>
-//#include <sstream>
-//#include <map>
-//#include <vector>
 #include <boost/interprocess/sync/file_lock.hpp>
-//#include <boost/lexical_cast.hpp>
-//#include <sys/stat.h>
-//#include <boost/date_time/posix_time/conversion.hpp> // boost:::to_time_t(ptime pt) - ilość sekund od 1970.
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-//#include <boost/filesystem/operations.hpp> // rezygnuję, bo trzeba linkować. -lboost_system -lboost_filesystem 
-
-// FIXME - bez sensu, ta mapa wogóle nie jest używana
-#if 0
-std::map<std::string,std::string> error_codes = {
-/*0     */	  {"OK"                    , "OK" }
-/*101001*/	, {"missing_pwd"           , "brakuje --pwd_dir" }
-/*101002*/	, {"cant_open_result_file" , "nie moze otworzyc pliku bufora" }
-/*101003*/	, {"positive_seconds"      , "różnica w sekundach miała wyjść <=0 a nie wyszła" }
-/*101004*/	, {"cannot_stat_file"      , "cannot stat file" }
-/*101005*/	, {"missing_whoami"        , "brakuje whoami" }
-/*101006*/	, {"cannot_spawn"          , "failed to spawn orphan" }
-	};
-#endif
-
+// this short function removes characters forbidden by zsh
 std::string sanitize(std::string offending_string) {
-	std::string extr=":+-.=_,"; // () <> & na pewno nie mogą być, co do innych to nie wiem
+	std::string extr=":+-.=_,"; // the () <> & cannot be present for sure, about others I don't know.
 	std::replace_if(offending_string.begin(), offending_string.end(), [&extr](char ch)->bool{ return not(std::isalpha(ch) or std::isdigit(ch) or extr.find(ch)!=std::string::npos); } , ':');
 	return offending_string;
 }
 
+// small class to throw errors nicely.
 struct ExecError : std::runtime_error {
 	ExecError(int x) : std::runtime_error("exec failed") , code{x} , msg{} { }
 	ExecError(const char* s) : std::runtime_error("exec failed") , code{0} , msg{s} { }
