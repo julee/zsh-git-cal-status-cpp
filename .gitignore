@@ -1,5 +1,6 @@
 *.swp
-moj-git-status.bin
+git-status.bin
 git-cal.bin
 tags
 Session??.vim
+just_examine_porcelain_output.txt

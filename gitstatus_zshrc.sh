@@ -42,14 +42,14 @@ function update_current_git_vars() {
     unset __CURRENT_GIT_STATUS
 
     if [[ "$1" == "n" ]]; then
-	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
+	local gitstatus="$__GIT_PROMPT_DIR/git-status.bin"
 	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir ${PWD:A} --refresh-sec 2  2>/dev/null`
     fi
     if [[ "$1" == "d" ]]; then
 ZSH_THEME_GIT_PROMPT_PREFIX="│"
 ZSH_THEME_GIT_PROMPT_SUFFIX="│"
 ZSH_THEME_GIT_PROMPT_SEPARATOR=""
-	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
+	local gitstatus="$__GIT_PROMPT_DIR/git-status.bin"
 	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git      --work-tree=${HOME}     --branch-master-override d --refresh-sec  4   2>/dev/null`
     fi
     if [[ "$1" == "j" ]]; then
@@ -57,7 +57,7 @@ ZSH_THEME_GIT_PROMPT_PREFIX="│"
 ZSH_THEME_GIT_PROMPT_SUFFIX=""
 ##"║"
 ZSH_THEME_GIT_PROMPT_SEPARATOR=""
-	local gitstatus="$__GIT_PROMPT_DIR/moj-git-status.bin"
+	local gitstatus="$__GIT_PROMPT_DIR/git-status.bin"
 	_GIT_STATUS=`${gitstatus} --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override j --refresh-sec  6   2>/dev/null`
     fi
 
@@ -96,7 +96,7 @@ git_super_status() {
 	  if [ "$GIT_UNTRACKED" -ne "0" ]; then
 		  STATUS="$STATUS$ZSH_THEME_GIT_PROMPT_UNTRACKED%{${reset_color}%}"
 	  fi
-### ten jest przydatny do debugowania - wyświetla ile sekund temu było odświeżane.
+### XXX: This one is useful for debugging - shows how many seconds since last refresh.
 #	  if [ "$GIT_SECONDS_OR_ERROR" -ne "0" ]; then
 #		  STATUS="$STATUS$GIT_SECONDS_OR_ERROR$ZSH_THEME_GIT_PROMPT_SEC_ERR%{${reset_color}%}"
 #	  fi
