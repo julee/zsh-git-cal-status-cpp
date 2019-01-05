@@ -1,3 +1,14 @@
+/* this produces a git-calendar, like github or gitlab show for user activity.
+ * See git-cal --help.
+ *
+ * Example scripts for .dotfiles:
+ *
+ * git-cal.bin --git-dir ~/.dotfiles/.git --work-tree=${HOME} "$@"
+ * git-cal.bin --git-dir /home/.janek-git/.git --work-tree=/home/janek "$@"
+ * git-cal.bin "$@"
+ *
+ */
+
 #include "OptionsCal.hpp"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "boost/date_time/c_local_time_adjustor.hpp"
@@ -8,7 +19,7 @@
 //#include <boost/optional/optional_io.hpp>
 #include <sys/ioctl.h>
 
-// FIXME - duplicate from file moj-git-status.cpp, because I am lazy
+// FIXME - duplicate with small changes from file moj-git-status.cpp. Should fix later.
 std::string exec(const std::string& cmd) {
     std::array<char, 128> buffer;
     std::string result;
@@ -48,7 +59,7 @@ struct DayInfo {
 std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost::posix_time::time_period> > calcStreak(const std::set<int>& streaks) {
 	if(streaks.empty()) return {boost::none,boost::none};
 
-// FIXME - duplicate from int main(), because I am lazy
+// FIXME - duplicate from int main(), should fix this later
 	auto        now_local_date = boost::posix_time::second_clock::local_time().date();
 	// I need ptime, with truncated hours.
 	boost::posix_time::ptime now_date_LOC{now_local_date};
