@@ -16,4 +16,9 @@ The prompt may look like the following:
 -   `<experimental↓2↑3|✓>`: on branch `experimental`; your branch has diverged by 3 commits, remote by 2 commits; the repository is otherwise clean
 -   `<:70c2952|✓>`: not on any branch; parent commit has hash `70c2952`; the repository is otherwise clean
 
+Here is how it could look like when you are ahead by 1 commit, and have 2 staged files, 1 changed but unstaged file, and some untracked files, on branch `master`:
+
+<img src="https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-cal-scr.png" width=369/>
+
+
 
