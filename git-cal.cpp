@@ -16,7 +16,6 @@
 #include <sstream>
 #include <codecvt>
 #include <boost/optional.hpp>
-//#include <boost/optional/optional_io.hpp>
 #include <sys/ioctl.h>
 
 // FIXME - duplicate with small changes from file moj-git-status.cpp. Should fix later.
@@ -45,7 +44,7 @@ struct CommitInfo {
 
 struct AuthorStreak {
 	int count{0};
-	// one są wyrażone w jednostkach days_back
+	// streaks are expressed in units of days_back
 	std::set<int> streaks{};
 };
 
@@ -67,6 +66,7 @@ std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost
 
 	int cur_start{-1},cur_end{-1},lon_start{-1},lon_end{-1};//,tmp_start{-1},tmp_end{-1};
 
+// This loop can be done better.
 	std::vector<int> cal( *streaks.rbegin()+1 , 0);
 	for(const auto& i : streaks) { cal[i] = 1; }
 	for(size_t i=1 ; i<cal.size() ; ++i) { if((cal[i] != 0) and (cal[i-1] != 0)) cal[i] = cal[i-1]+1; }
@@ -111,7 +111,7 @@ std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost
 			}
 		}
 	}
-	// aj, odwrotnie mam start↔end , bo numerki w std::set<int> lecą wstecz
+	// oops start↔end got swapped, because numbers inside std::set<int> go back
 	//std::swap(lon_end,lon_start);
 	//std::swap(cur_end,cur_start);
 */

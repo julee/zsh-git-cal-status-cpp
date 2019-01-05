@@ -83,7 +83,6 @@ struct Options
 		}
 		os << prefix << "\n";
 	};
-	
 };
 
 #endif

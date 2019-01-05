@@ -86,7 +86,6 @@ struct OptionsCal
 		}
 		os << prefix << "\n";
 	};
-	
 };
 
 #endif
