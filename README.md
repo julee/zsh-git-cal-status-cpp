@@ -19,7 +19,7 @@ The prompt may look like the following:
 
 Here is how it could look like when you are ahead by 1 commit, have 2 staged files, 1 changed but unstaged file, and some untracked files, on branch `master`:
 
-![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr.png")
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr.png)
 
 ## Prompt Structure
 
@@ -60,7 +60,7 @@ Symbol | Meaning
     source path/to/gitstatus_zshrc.sh
     # an example prompt
     PROMPT='%B%m%~%b$(git_super_status n) %# '
-    # an example prompt for tracking more repositories
+    # an example prompt for tracking more repositories, eg. .dotfiles and documents separately
     PROMPT='%B%m%~%b$(git_super_status j)$(git_super_status d)$(git_super_status n) %# '
     ```
 3.  Go in a git repository and test it!
