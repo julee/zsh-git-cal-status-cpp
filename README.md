@@ -75,5 +75,7 @@ Symbol | Meaning
 # git-cal
 
 ### Description
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr1.png)
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr2.png)
 
 
