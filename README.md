@@ -19,7 +19,7 @@ The prompt may look like the following:
 
 Here is how it could look like when you are ahead by 1 commit, have 2 staged files, 1 changed but unstaged file, and some untracked files, on branch `master`:
 
-![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr.png)
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-cal-scr.png)
 
 ## Prompt Structure
 
@@ -78,4 +78,8 @@ Symbol | Meaning
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr1.png)
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr2.png)
 
+* git-cal is a simple C++ code to view commits calendar (similar to github contributions calendar) on command line
+* Each block in the graph corresponds to a day and is shaded with one
+  of the 5 possible colors, each representing relative number of commits on that day.
+* Possible to see authors, count contributions in each year, show amount of commits per day.
 
