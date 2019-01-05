@@ -5,7 +5,7 @@
  *    returns:
  *      [ branch_name , ahead , behind , staged    , conflicts , changed , untracked , error_code ]
  *    Only when the error_code == 0, the rest has any meaning, otherwise it indicates what wne wrong.
- *    It stores the result in a file in /tmp/ see variable lockfile_name below
+ *    It stores the result in a file in /tmp/ see variable result_file below
  *
  * 2. if lockfile creation was unsuccesfull then:
  *    Returns the result of previous call if the file in /tmp/ exists:
@@ -64,11 +64,10 @@ struct ExecError : std::runtime_error {
 	const char* what() const noexcept override { return "exec error"; }
 };
 
-// https://stackoverflow.com/questions/52164723/how-to-execute-a-command-and-get-return-code-stdout-and-stderr-of-command-in-c
-// FIXME: lepsze to, ale nie działa tego nie ma w boost 1.62, jest dopiero od 1.64, a ja mam tutaj 1.62
-//        https://www.boost.org/doc/libs/1_65_1/doc/html/boost_process/tutorial.html#boost_process.tutorial.starting_a_process
+// source: https://stackoverflow.com/questions/52164723/how-to-execute-a-command-and-get-return-code-stdout-and-stderr-of-command-in-c
 std::string exec(const std::string& cmd, int code) {
-/* ajajaj, tego nie ma w boost 1.62, jest w 1.68, a ja mam tutaj 1.62
+/* this unfortunately requires boost 1.68, but I have 1.62 here. And it would be MUCH shorter, just one line with boost::process::system(...)
+//        https://www.boost.org/doc/libs/1_65_1/doc/html/boost_process/tutorial.html#boost_process.tutorial.starting_a_process
 #include <iostream>
 #include <boost/process/system.hpp>
 int main(int argc, char** argv)
@@ -78,7 +77,7 @@ int main(int argc, char** argv)
 	boost::process::system("ls -laR /tmp", bp::std_out > std_out, bp::std_err > std_err, bp::std_in < stdin);
 }
 */
-
+// so I will use a generic method
     std::array<char, 128> buffer;
     std::string result;
     auto pipe = popen(cmd.c_str(), "r"); // get rid of shared_ptr
@@ -99,7 +98,7 @@ int main(int argc, char** argv)
 const std::vector<std::string> conflict_strings{"DD","AU","UD","UA","DU","AA","UU"};
 class GitParse {
 	private:
-		std::string	branch    = "testuje";
+		std::string	branch    = "testing";
 		int		ahead     = 0;
 		int		behind    = 0;
 		int		staged    = 0;
@@ -181,102 +180,27 @@ std::string gitParsedResult(const Options& opt) {
 	return result.str(opt);
 }
 
-int fileOlderSeconds(const std::string& fn /*,bool do_throw*/) {
+int fileOlderSeconds(const std::string& fn) {
 	struct stat result;
 	if(stat(fn.c_str(), &result)==0) {
 		auto mod_time = result.st_mtime;
 		boost::posix_time::ptime when(boost::posix_time::from_time_t(mod_time)         );
 		boost::posix_time::ptime now (boost::posix_time::second_clock::universal_time());
 
-	// FIXME - jednak tego nie linkuję, żeby mieć boost::filesystem::rename, więc tutaj też mogę to użyć.
+	// XXX I would use this one, but I prefer to avoid linking with boost_filesystem
+	//	//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname);
 	//         https://beta.boost.org/doc/libs/1_47_0/libs/filesystem/v3/doc/reference.html#last_write_time
-	//	//std::time_t when = boost::filesystem::last_write_time(lock_2nd_fname); // rezygnuję, bo trzeba linkować.
 
-		int older = (when-now).total_seconds(); // powinno wyjść ujemne.
+		int older = (when-now).total_seconds(); // should be negative.
 		if(older > 0) {
-		/*
-			if(do_throw) {
-				throw ExecError("positive_seconds");//(101003);
-			} else
-		*/
-			{
-				return 1;
-			}
+			return 1;
 		}
 		return older;
 	};
-/*
-	if(do_throw) {
-		throw ExecError("positive_seconds");//(101004);
-	} else
-*/
-	{
-		return 1;
-	}
+	return 1;
 }
-
-#if 0
-// https://stackoverflow.com/questions/17599096/how-to-spawn-child-processes-that-dont-die-with-parent
-// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
-bool spawn_orphan(const std::string& cmd) {
-	//char command[1024]; // We could segfault if cmd is longer than 1000 bytes or so
-	if(cmd.size() > 1000) {
-		return false;
-	}
-	int pid;
-	int Stat;
-	pid = fork();
-	if (pid < 0) { // perror("FORK FAILED\n"); return pid;
-		return false;
-	}
-	if (pid == 0) { // CHILD
-		setsid(); // Make this process the session leader of a new session
-		pid = fork();
-		if (pid < 0) { //printf("FORK FAILED\n"); exit(1);
-			exit(1);
-		}
-		if (pid == 0) { // GRANDCHILD
-			//sprintf(command,"bash -c '%s'",cmd);
-			execl("/bin/sh", "/bin/sh", "-c", cmd.c_str(), NULL); // Only returns on error
-			//perror("execl failed");
-			// system(cmd.c_str()); // tego mocno odradzają.
-			exit(1);
-		}
-		exit(0); // SUCCESS (This child is reaped below with waitpid())
-	}
-
-	// Reap the child, leaving the grandchild to be inherited by init
-	waitpid(pid, &Stat, 0);
-	if ( WIFEXITED(Stat) && (WEXITSTATUS(Stat) == 0) ) {
-		return true; // Child forked and exited successfully
-	} else {
-		//perror("failed to spawn orphan\n");
-		//return -1;
-		return false;
-	}
-}
-
-/* bo tamten nie chce działać wewnątrz zsh
-bool inny_spawn_orphan(const std::string& cmd) {
-}
-*/
-
-void spawn_myself(const Options& opt, char** argv) {
-	std::string command = argv[0];
-	command = "/home/"+opt.whoami+"/bin/"+command+opt.rebuild()+" --must-update-now";
-	//std::cerr << "\n-calling-\n" << command << "\n--\n";
-	// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
-	if(not spawn_orphan(command)) {
-		throw ExecError("cannot_spawn");//(101006);
-	}
-}
-#endif
 
 void update_git_status(const std::string& lock_1st_fname, const std::string& lock_2nd_fname, const std::string& lock_3rd_fname, const Options& opt) {
-	//std::cerr << "\n-must_update_now-\n";
-/* resygnuję z touch, sam utworze ten plik.
-	std::string touch  = exec("/usr/bin/touch "+lock_1st_fname,200000);  //std::cerr << "touch    : \"" << touch      << "\"\n";
-*/
 	std::ofstream touch_file(lock_1st_fname);
 	if(touch_file.is_open()) {
 		touch_file.close();
@@ -287,34 +211,25 @@ void update_git_status(const std::string& lock_1st_fname, const std::string& loc
 		std::ofstream result_file(lock_2nd_fname);
 		boost::interprocess::file_lock the_2nd_lock(lock_2nd_fname.c_str());
 		if(the_2nd_lock.try_lock() and result_file.is_open()) {
-			// mamy otwarty plik result_file, można do niego pisać.
+			// the file result_file is open! We can store cached results there.
 			std::string git_parsed_result = gitParsedResult(opt);
 			result_file << git_parsed_result;
 			result_file.close();
 			the_2nd_lock.unlock();
-		/* zamiast tego użyję boosta
-			std::string command = "/bin/mv -f "+lock_2nd_fname+" "+lock_3rd_fname;
-			system(command.c_str());
-		*/
-		// FIXME - jednak tego nie linkuję, żeby mieć boost::filesystem::rename, więc tutaj też mogę to użyć.
-		//         https://beta.boost.org/doc/libs/1_47_0/libs/filesystem/v3/doc/reference.html#last_write_time
-		//	boost::filesystem::rename(lock_2nd_fname,lock_3rd_fname);
-		// eee, spróbuję samo polecenie rename ze <stdio.h>:
-			/*int error_code =*/ rename(lock_2nd_fname.c_str() , lock_3rd_fname.c_str());
-			// ignoruję kod błędu, co mnie obchodzi czy to się udało. I tak nic na to nie poradzę.
-		} // else // nie udało się do niego pisać, chociaż mamy wynik :(
-	//	std::cout << git_parsed_result << " 0"; // ostatnie zero oznacza brak błędów
+			// maybe I am over-secure by using 3 files. But that is only to avoid any possible race condition.
+			rename(lock_2nd_fname.c_str() , lock_3rd_fname.c_str());
+		}
+		// if cannoot write, then we better ignore that, because we have the result. So there is no reason to throw exception.
 	}
 }
 
 int main(int argc, char** argv)
 try {
-//	struct winsize w; ioctl(0, TIOCGWINSZ, &w);
-	Options opt(argc,argv/*,w.ws_col,15*/);//std::cerr << "pwd dir  : " << opt.pwd_dir << "\n"; //std::cerr << "git dir  : " << opt.git_dir << "\n";//std::cerr << "work tree: " << opt.work_tree << "\n";
+	Options opt(argc,argv);
 	if(opt.pwd_dir == "") throw ExecError("missing_pwd");//(101001);
 	if(opt.whoami  == "") throw ExecError("missing_whoami");//(101005);
-	//std::string whoami = exec("/usr/bin/whoami",100000);  //std::cerr << "whoami   : \"" << whoami     << "\"\n";
-	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+opt.whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));  //std::cerr << lockfile_name << "\n";
+	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+opt.whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));
+	// maybe I am over-secure by using 3 files. But that is only to avoid any possible race condition.
 	std::string lock_1st_fname = "/tmp/"+lockfile_name;
 	std::string lock_2nd_fname = "/tmp/"+lockfile_name+"_RESULT";
 	std::string lock_3rd_fname = "/tmp/"+lockfile_name+"_COPY";
@@ -322,14 +237,14 @@ try {
 	if(not opt.must_update_now) {
 		int older = fileOlderSeconds(lock_3rd_fname);
 		if(-older > opt.refresh_sec or older == 1) { // forced refresh
-#if 0
-			// Niestety nie działa wewnątrz zsh. Tzn odpalany niezależnie - działa. Ale wewnątrz zsh się nie potrafi zforkować / zespawnować.
-			spawn_myself(opt,argv);
-#endif
+			// I wanted to use spawn_orphan (it's even in the git's history), to avoid blocking zsh. But I couldn't get this to work.
+			// It only works outside zsh internal scripts.
+			// https://stackoverflow.com/questions/17599096/how-to-spawn-child-processes-that-dont-die-with-parent
+			// spawn_myself(opt,argv);
 			update_git_status(lock_1st_fname,lock_2nd_fname,lock_3rd_fname,opt);
 		}
 		{
-			// nie udało się zakluczyć, lub nie musimy odświeżać, zwracamy zawartość result_file
+			// file locking failed, or we don't need to refresh. So let's return the conents of result_file
 			std::ifstream result_file(lock_3rd_fname);
 			if(result_file.is_open()) {
 				std::string line;
@@ -346,22 +261,13 @@ try {
 
 
 } catch(const ExecError& err) {
-//std::cerr << "Error code " << err.code;
-	if(err.code == 32768) { // fatal: Not a git repository - nie ma nic do pisnia.
+	if(err.code == 32768) { // fatal: Not a git repository - there is nothing to return. And actually not an error :)
 		return 0;
 	}
-/*
-	auto it = error_codes.find(err.code);
-	if(it != error_codes.end()) {
-//std::cerr << " : " << it->second << "\n";
-	} else {
-//std::cerr << " : unrecognized code\n";
-	}
-*/
 	if(err.msg.empty()) {
-		std::cout << "err"+boost::lexical_cast<std::string>(err.code)+" 0 0 0 0 0 0 " << err.code;
+		std::cout << "err" << err.code << " 0 0 0 0 0 0 " << err.code;
 	} else {
-		std::cout << "error:"+err.msg+" 0 0 0 0 0 0 " << err.code;
+		std::cout << "error:"<< err.msg << " 0 0 0 0 0 0 " << err.code;
 	}
 	return err.code;
 }
