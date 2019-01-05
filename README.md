@@ -83,3 +83,18 @@ Symbol | Meaning
   of the 5 possible colors, each representing relative number of commits on that day.
 * Possible to see authors, count contributions in each year, show amount of commits per day.
 
+```
+$ git-cal --help
+  -h [ --help ]                   display this help.
+  --git-dir arg                   The --git-dir for git
+  --work-tree arg                 The --work-tree for git
+  -a [ --author ] arg             analyse commits of only one selected author, otherwise all authors are included
+  -y [ --only-last-year ]         print only single year of data, skip older data
+  -Y [ --use-calendar-years ]     the calendar will be organized using `calandar years`, not `days back`
+  -s [ --start-with-sunday ]      start week with sunday instead of monday
+  -n [ --number-days ]            instead of ◼ put the day of the month (as in real calendar)
+  -c [ --number-commits ]         instead of ◼ put the commit count number
+  -N [ --print-authors ] arg (=0) print the commit count and streaks per author for top N authors
+  -S [ --print-streaks ]          print the commit count and streaks for all authors merged together (or single author if -a is specified)
+  -e [ --include-emails ]         also print the author's email
+```
