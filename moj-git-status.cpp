@@ -1,45 +1,42 @@
-/* program:
+/* how it works:
  *
- * 1. zakłada unikalny lockfile(…) dla podanych argumentów + whoami + pwd
- *    → jesli uda się go założyć to wywołuje git status --porcelain --branch --git-dir ARG1 --work-tree ARG2
- *    Zwraca:
- *      [ branch , ahead , behind , staged    , conflicts , changed , untracked , kod_błędu ]
- *    Tylko gdy kod_błędu != 0, to reszta ma sens, w przeciwnym razie wskazuje co poszło źle w wywołaniu.
+ * 1. creates unique lockfile(…) for given arguments + whoami + pwd
+ *    → if that was successful then calls in the shell: git status --porcelain --branch --git-dir ARG1 --work-tree ARG2
+ *    returns:
+ *      [ branch_name , ahead , behind , staged    , conflicts , changed , untracked , error_code ]
+ *    Only when the error_code == 0, the rest has any meaning, otherwise it indicates what wne wrong.
+ *    It stores the result in a file in /tmp/ see variable lockfile_name below
  *
- * 2. jeśli nie udało się założyć lockfile to:
- *    Zwraca wynik poprzedniego wywołania, jeśli taki istnieje
- *      [ branch , ahead , behind , staged    , conflicts , changed , untracked , kod_błędu ]
- *    W przeciwnym razie zwraca tylko kod błędu:
- *      [ branch ,   0   ,    0   ,     0     ,   0       ,    0    ,     0     , kod_błędu ]
+ * 2. if lockfile creation was unsuccesfull then:
+ *    Returns the result of previous call if the file in /tmp/ exists:
+ *      [ branch_name , ahead , behind , staged    , conflicts , changed , untracked , error_code ]
+ *    Othwersie it's just an error:
+ *      [ branch_name ,   0   ,    0   ,     0     ,   0       ,    0    ,     0     , error_code ]
  *
- * kody_błędów:
- *    0      : nie ma problemów
- *    101001 : brakuje --pwd_dir
- *    101002 : nie moze otworzyc pliku bufora
- *    101003 : różnica w sekundach miała wyjść <=0 a nie wyszła.
+ * error_code (negative values are not fatal error, just extra information):
+ *    0      : OK
+ *    101001 : --pwd_dir is missing
+ *    101002 : cannot open the cached file in /tmp
+ *    101003 : difference in seconds should be <=0, but it is not: the cached file in /tmp/ is newer than current system time.
  *    101004 : cannot stat file.
- *    101005 : brakuje whoami
+ *    101005 : --whoami is missing
  *    101006 : failed to spawn orphan
- *    -N     : wynik odczytany z bufora N sekund temu (pewnie się teraz akurat liczy nowy git status i jeszcze nie skończył).
- *    -100   : wynik specjalny - gdy nie udało się sprawdzić daty na pliku bufora.
+ *    -N     : the result was read from cached file in /tmp which is N seconds old (probably git ststus is being run right now in other instance, the files are locked, and it didn't finish yet).
+ *    -100   : special error: it was impossible to read the date of the cached file in /tmp.
  *
- * przykłądowe wywołania:
+ * example usage:
 
-moj-git-status.bin --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek
-moj-git-status.bin --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jg
+# to use on home or documents directory:
+git-status.bin --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek
+git-status.bin --whoami $(whoami) --pwd-dir JGIT --git-dir /home/.janek-git/.git --work-tree=/home/janek --branch-master-override jg
 
-moj-git-status.bin --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git --work-tree=$HOME
-moj-git-status.bin --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git --work-tree=$HOME --branch-master-override dg
+# to use on .dotfiles directory
+git-status.bin --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git --work-tree=$HOME
+git-status.bin --whoami $(whoami) --pwd-dir DGIT --git-dir ~/.dotfiles/.git --work-tree=$HOME --branch-master-override dg
 
-moj-git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
+# to use on project in present directory
+git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 
- *
- * FIXME: w sumie on też mógłby robić ten kalendarze, wywołanie gita, żeby mieć daty commitów:
- *   git log --no-merges --pretty=format:"%at" --since="13 months"
- *   git log --no-merges --pretty=format:"%at"
- *   git log --no-merges --pretty=format:"%at" --author="$author"
- *   git log --no-merges --pretty=format:"%at" --author="$author" --all // --all oznacza commity all branches.
- *
  */
 
 #include "Options.hpp"
