@@ -36,7 +36,7 @@ struct OptionsCal
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
 		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"analyse commits of only one selected author, otherwise all authors are included")
 		("only-last-year,y"       , po::bool_switch       (&only_last_year         )->default_value(false),"print only single year of data, skip older data")
-		("use-calendar-years,Y"   , po::bool_switch       (&use_calendar_years     )->default_value(false),"the calendar will be organized using `calandar years`, not `days back`")
+		("use-calendar-years,Y"   , po::bool_switch       (&use_calendar_years     )->default_value(false),"the calendar will be organized using `calendar years`, not `days back`")
 		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"start week with sunday instead of monday")
 		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of the month (as in real calendar)")
 //		(",d"                     , po::bool_switch       (&number_days            )->default_value(false),"same as --number-days, -n")

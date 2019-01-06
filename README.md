@@ -58,7 +58,7 @@ Symbol | Meaning
 
     ```sh
     source path/to/gitstatus_zshrc.sh
-    # an example prompt
+    # an example prompt, note letter n in the argument
     PROMPT='%B%m%~%b$(git_super_status n) %# '
     # an example prompt for tracking more repositories, eg. .dotfiles and documents separately
     PROMPT='%B%m%~%b$(git_super_status j)$(git_super_status d)$(git_super_status n) %# '
@@ -70,7 +70,7 @@ Symbol | Meaning
 - You may redefine the function `git_super_status` (after the `source` statement) to adapt it to your needs (to change the order in which the information is displayed).
 - Define the variable `ZSH_THEME_GIT_PROMPT_CACHE` in order to enable caching.
 - You may also change a number of variables (which name start with `ZSH_THEME_GIT_PROMPT_`) to change the appearance of the prompt.  Take a look in the file `zshrc.sh` to see how the function `git_super_status` is defined, and what variables are available.
-- the `j`, `d` and `n` are used to be able simultaneously track three different repositories, see `gitstatus_zshrc.sh` for details.
+- the `j`, `d` and `n` are used to be able simultaneously track three different repositories (eg. .dotfiles and personal documents separately, along with repository in current directory), see `gitstatus_zshrc.sh` for details.
 
 # git-cal
 
@@ -93,7 +93,7 @@ $ git-cal --help
   -y [ --only-last-year ]         print only single year of data, skip older 
                                   data
   -Y [ --use-calendar-years ]     the calendar will be organized using 
-                                  `calandar years`, not `days back`
+                                  `calendar years`, not `days back`
   -s [ --start-with-sunday ]      start week with sunday instead of monday
   -n [ --number-days ]            instead of ◼ put the day of the month (as 
                                   in real calendar)
