@@ -49,9 +49,10 @@ git-status.bin --whoami $(whoami) --pwd-dir ${PWD:A}
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 // this short function removes characters forbidden by zsh
-std::string sanitize(std::string offending_string) {
-	std::string extr=":+-.=_,"; // the () <> & cannot be present for sure, about others I don't know.
-	std::replace_if(offending_string.begin(), offending_string.end(), [&extr](char ch)->bool{ return not(std::isalpha(ch) or std::isdigit(ch) or extr.find(ch)!=std::string::npos); } , ':');
+std::string sanitize(std::string offending_string , bool allow_slash=true) {
+	std::string allowed_characters=":+-.=_,"; // the () <> & cannot be present for sure, about others I don't know.
+	if(allow_slash) { allowed_characters+="/"; };
+	std::replace_if(offending_string.begin(), offending_string.end(), [&allowed_characters](char ch)->bool{ return not(std::isalpha(ch) or std::isdigit(ch) or allowed_characters.find(ch)!=std::string::npos); } , ':');
 	return offending_string;
 }
 
@@ -228,7 +229,7 @@ try {
 	Options opt(argc,argv);
 	if(opt.pwd_dir == "") throw ExecError("missing_pwd");//(101001);
 	if(opt.whoami  == "") throw ExecError("missing_whoami");//(101005);
-	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+opt.whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree));
+	std::string lockfile_name = sanitize(std::string("moj_git_status_PWD:"+opt.pwd_dir+"_WHO:"+opt.whoami+"_DIR:"+opt.git_dir+"_TREE:"+opt.work_tree) , false);
 	// maybe I am over-secure by using 3 files. But that is only to avoid any possible race condition.
 	std::string lock_1st_fname = "/tmp/"+lockfile_name;
 	std::string lock_2nd_fname = "/tmp/"+lockfile_name+"_RESULT";
