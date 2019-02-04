@@ -336,8 +336,10 @@ int main(int argc, char** argv)
 //		int idx = ( now_date_UTC - boost::posix_time::ptime( that_commit_UTC.time                   .date()) ).hours()/24;
 		// I need difference between dates with truncated hours, so that one second after midnight becomes full 24 hours.
 		int idx = ( now_date_LOC - boost::posix_time::ptime((boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(that_commit_UTC.time)).date()) ).hours()/24;
-		count_per_day[ idx ].count += 1;
-		count_per_day[ idx ].authors[that_commit_UTC.author].count += 1;
+		if((idx >=0) and (idx < int(count_per_day.size()))) {
+			count_per_day[ idx ].count += 1;
+			count_per_day[ idx ].authors[that_commit_UTC.author].count += 1;
+		}
 	}
 
 // The Dot class will print colored ◼ or commit counts or day of the month
