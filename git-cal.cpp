@@ -174,9 +174,14 @@ struct Dot {
 		std::sort(vv.begin(),vv.end());
 		size_t s = vv.size();
 //	std::cout << s << " ← size\n";
-		q1=vv[s/4];
-		q2=vv[s/2];
-		q3=vv[3*s/4];
+		if(s!=0) {
+			q1=vv[s/4];
+			q2=vv[s/2];
+			q3=vv[3*s/4];
+		} else {
+			std::cerr << "Error: there are zero commits.\n";
+			exit(1);
+		}
 //		std::cerr << vv[0] << " quartiles: " << q1 << " " << q2 << " " << q3 << "\n";
 	};
 	void print(int val , const boost::posix_time::ptime& then, const OptionsCal& opt) {
