@@ -284,6 +284,12 @@ int main(int argc, char** argv)
 	int         years_max      = (now - date1970).hours()/24/365.25 - 5; // FIXME : better use now.date().year() - 1975; why did I write it this way earlier??
 	// if only_last_year then reset years_max to 1.
 	if(opt.only_last_year) { years_max=1; }
+// https://git-scm.com/docs/pretty-formats
+// XXX: Thinking about adding the ability to count the number of lines in each commit, then for example filtering git-cal to show only commits within some range of committed lines.
+//      so far I found the --numstat option
+//      git log --no-merges --pretty=format:"%at %aE, %aN" --since="13 months" --numstat
+//      also I found this to count number of lines, but it has mistakes:
+//        git ls-files -z | xargs -0n1 git blame -w | ruby -n -e '$_ =~ /^.*\((.*?)\s[\d]{4}/; puts $1.strip' | sort -f | uniq -c | sort -n
 // Prepare --pretty=format for git invocation
 	std::string fmt="";
 	if(opt.print_authors != 0) {
