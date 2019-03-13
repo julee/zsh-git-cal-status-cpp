@@ -61,10 +61,18 @@ struct OptionsCal
 
 		if(number_days_) {
 			//std::cout << "--days,-d used, ok.\n";
+			if(number_days) {
+				std::cerr << "Can't use both -d and -n\n";
+				exit(1);
+			}
 			number_days = number_days_;
 		}
 		if(author_ != "") {
 			//std::cout << "--Author,-A used, ok.\n";
+			if(author!="") {
+				std::cerr << "Can't use both -a and -A\n";
+				exit(1);
+			}
 			author = author_;
 		}
 	};
