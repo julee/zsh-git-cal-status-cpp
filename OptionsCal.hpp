@@ -14,8 +14,10 @@ struct OptionsCal
 	std::string	git_dir;
 	std::string	work_tree;
 	std::string	author;
+	std::string	author_;
 	bool		start_with_sunday;
 	bool		number_days;
+	bool		number_days_;
 	bool		number_commits;
 	int		print_authors;
 	bool		include_emails;
@@ -35,14 +37,14 @@ struct OptionsCal
 		("git-dir"                , po::value<std::string>(&git_dir                )->default_value(""   ),"The --git-dir for git")
 		("work-tree"              , po::value<std::string>(&work_tree              )->default_value(""   ),"The --work-tree for git")
 		("author,a"               , po::value<std::string>(&author                 )->default_value(""   ),"analyse commits of only one selected author, otherwise all authors are included")
+		("Author,A"               , po::value<std::string>(&author_                )->default_value(""   ),"same as --author, -a")
 		("only-last-year,y"       , po::bool_switch       (&only_last_year         )->default_value(false),"print only single year of data, skip older data")
 		("use-calendar-years,Y"   , po::bool_switch       (&use_calendar_years     )->default_value(false),"the calendar will be organized using `calendar years`, not `days back`")
 		("start-with-sunday,s"    , po::bool_switch       (&start_with_sunday      )->default_value(false),"start week with sunday instead of monday")
 		("number-days,n"          , po::bool_switch       (&number_days            )->default_value(false),"instead of ◼ put the day of the month (as in real calendar)")
-//		(",d"                     , po::bool_switch       (&number_days            )->default_value(false),"same as --number-days, -n")
+		("days,d"                 , po::bool_switch       (&number_days_           )->default_value(false),"same as --number-days, -n")
 		("number-commits,c"       , po::bool_switch       (&number_commits         )->default_value(false),"instead of ◼ put the commit count number")
 		("print-authors,N"        , po::value<int>        (&print_authors          )->default_value(0    ),"print the commit count and streaks per author for top N authors")
-//		(",A"                     , po::value<int>        (&print_authors          )->default_value(0    ),"same as --print-authors, -N")
 		("print-streaks,S"        , po::bool_switch       (&print_streaks          )->default_value(false),"print the commit count and streaks for all authors merged together (or single author if -a is specified)")
 		("include-emails,e"       , po::bool_switch       (&include_emails         )->default_value(false),"also print the author's email")
 		;
@@ -56,6 +58,15 @@ struct OptionsCal
 			exit(0);
 		}
 		vm_local=vm;	
+
+		if(number_days_) {
+			//std::cout << "--days,-d used, ok.\n";
+			number_days = number_days_;
+		}
+		if(author_ != "") {
+			//std::cout << "--Author,-A used, ok.\n";
+			author = author_;
+		}
 	};
 
 	std::string rebuild() const {
