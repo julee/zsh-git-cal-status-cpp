@@ -78,7 +78,7 @@ Symbol | Meaning
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr1.png)
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr2.png)
 
-BTW, [vim-fugitive](https://github.com/tpope/vim-fugitive) is awesome, and here you can see all it's history with top 3 authors:
+BTW, [vim-fugitive](https://github.com/tpope/vim-fugitive) is awesome, and here you can see all its history with top 3 authors:
 
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/fugitive.png)
 
