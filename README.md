@@ -1,6 +1,6 @@
 # C++ git-cal and git-status
 
-This is inspired by [zsh-git-prompt](https://github.com/olivierverdier/zsh-git-prompt) and [git-cal](https://github.com/k4rthik/git-cal). I only needed something much faster. Notice: this readme is a slightly modified clone of their readmes.
+This is inspired by [zsh-git-prompt](https://github.com/olivierverdier/zsh-git-prompt) and [git-cal](https://github.com/k4rthik/git-cal). I only needed something fast. Notice: this readme is a slightly modified clone of their readmes.
 
 So it is written in C++ to make processing the fastest on the planet. There still has to be one (slow) call to `git`, but that's all about it. To make it even faster git-status uses a lockfile+caching mechanism using files in /tmp. If cache is younger than `--refresh-sec` seconds, then it is used rather than invoking `git` again.
 
