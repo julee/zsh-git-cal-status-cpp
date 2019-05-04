@@ -1,8 +1,8 @@
 # C++ git-cal and git-status
 
-This is inspired by https://github.com/olivierverdier/zsh-git-prompt and https://github.com/k4rthik/git-cal. Notice: this readme is a slightly modified clone of their readmes.
+This is inspired by [zsh-git-prompt](https://github.com/olivierverdier/zsh-git-prompt) and [git-cal](https://github.com/k4rthik/git-cal). I only needed something much faster. Notice: this readme is a slightly modified clone of their readmes.
 
-It is written in C++ to make processing faster. There is still one (slow) call to `git`, but that's all about slowness. To make it even faster git-status uses a lockfile+caching mechanism using files in /tmp. If cache is younger than `--refresh-sec` seconds, then it is used rather than invoking `git` again.
+So it is written in C++ to make processing the fastest on the planet. There still has to be one (slow) call to `git`, but that's all about it. To make it even faster git-status uses a lockfile+caching mechanism using files in /tmp. If cache is younger than `--refresh-sec` seconds, then it is used rather than invoking `git` again.
 
 # git-status
 
@@ -77,6 +77,10 @@ Symbol | Meaning
 ### Description
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr1.png)
 ![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr2.png)
+
+BTW, [vim-fugitive](https://github.com/tpope/vim-fugitive) is awesome, and here you can see all it's history with top 3 authors:
+
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/fugitive.png)
 
 * git-cal is a simple C++ code to view commits calendar on command line
 * Each block in the graph corresponds to a day and is shaded with one
