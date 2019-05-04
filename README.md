@@ -74,13 +74,7 @@ Symbol | Meaning
 
 # git-cal
 
-### Description
-![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr1.png)
-![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr2.png)
-
-BTW, [vim-fugitive](https://github.com/tpope/vim-fugitive) is awesome, and here you can see all its history with top 3 authors:
-
-![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/fugitive.png)
+## Description
 
 * git-cal is a simple C++ code to view commits calendar on command line
 * Each block in the graph corresponds to a day and is shaded with one
@@ -110,3 +104,13 @@ $ git-cal --help
                                   -a is specified)
   -e [ --include-emails ]         also print the author's email
 ```
+
+## Screenshots
+
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr1.png)
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/git-status-scr2.png)
+
+BTW, [vim-fugitive](https://github.com/tpope/vim-fugitive) is awesome, and here you can see all its history with top 3 authors:
+
+![screenshot with black theme](https://gitlab.com/cosurgi/zsh-git-cal-status-cpp/raw/master/fugitive.png)
+
