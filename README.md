@@ -79,7 +79,7 @@ Symbol | Meaning
 * git-cal is a simple C++ code to view commits calendar on command line
 * Each block in the graph corresponds to a day and is shaded with one
   of the 5 possible colors, each representing relative number of commits on that day.
-* The colors represent to quartiles, meaning that red color corresponds to 25% of most active days, and so on.
+* The colors represent quartiles, meaning that red color corresponds to 25% of most active days, and so on.
 * Possible to see authors, count contributions in each year, show amount of commits per day.
 
 ```
