@@ -85,6 +85,7 @@ BTW, [vim-fugitive](https://github.com/tpope/vim-fugitive) is awesome, and here 
 * git-cal is a simple C++ code to view commits calendar on command line
 * Each block in the graph corresponds to a day and is shaded with one
   of the 5 possible colors, each representing relative number of commits on that day.
+* The colors represent to quartiles, meaning that red color corresponds to 25% of most active days, and so on.
 * Possible to see authors, count contributions in each year, show amount of commits per day.
 
 ```
@@ -94,17 +95,17 @@ $ git-cal --help
   --work-tree arg                 The --work-tree for git
   -a [ --author ] arg             analyse commits of only one selected author,
                                   otherwise all authors are included
-  -y [ --only-last-year ]         print only single year of data, skip older 
+  -y [ --only-last-year ]         print only single year of data, skip older
                                   data
-  -Y [ --use-calendar-years ]     the calendar will be organized using 
+  -Y [ --use-calendar-years ]     the calendar will be organized using
                                   `calendar years`, not `days back`
   -s [ --start-with-sunday ]      start week with sunday instead of monday
-  -n [ --number-days ]            instead of ◼ put the day of the month (as 
+  -n [ --number-days ]            instead of ◼ put the day of the month (as
                                   in real calendar)
   -c [ --number-commits ]         instead of ◼ put the commit count number
-  -N [ --print-authors ] arg (=0) print the commit count and streaks per 
+  -N [ --print-authors ] arg (=0) print the commit count and streaks per
                                   author for top N authors
-  -S [ --print-streaks ]          print the commit count and streaks for all 
+  -S [ --print-streaks ]          print the commit count and streaks for all
                                   authors merged together (or single author if
                                   -a is specified)
   -e [ --include-emails ]         also print the author's email
