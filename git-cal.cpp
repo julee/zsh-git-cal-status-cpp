@@ -120,10 +120,10 @@ std::pair<boost::optional<boost::posix_time::time_period> ,boost::optional<boost
 	boost::posix_time::ptime then2 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(lon_end  -1)));
 	boost::posix_time::ptime then3 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(cur_start  )));
 	boost::posix_time::ptime then4 = now_date_LOC - boost::posix_time::time_duration(boost::posix_time::hours(24*(cur_end  -1)));
-	boost::optional<boost::posix_time::time_period> ret1=boost::none; ret1={then1 , then2};
+	boost::optional<boost::posix_time::time_period> ret1=boost::none; ret1=boost::optional<boost::posix_time::time_period>({then1 , then2});
 	boost::optional<boost::posix_time::time_period> ret2=boost::none;
 	if(cur_end   != -1) {
-		ret2 = { then3 , then4 };
+		ret2 = boost::optional<boost::posix_time::time_period>({ then3 , then4 });
 	}
 	return { ret1 , ret2 };
 }
